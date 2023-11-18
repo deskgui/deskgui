@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**deskgui** streamlines the development of web-based desktop applications compatible with MacOS, Windows, and Linux. It optimizes app sizes by utilizing native webviews, ensuring efficient performance without bundling external web engines.
+**deskgui** simplifies the development of web-based desktop applications for MacOS, Windows and Linux. It optimizes binary sizes by using native webviews, ensuring efficient performance without bundling an external web engine.
 
 <img src=".github/window_comparison.png" alt="window comparison" />
 
@@ -14,7 +14,7 @@ deskgui offers the following key features:
 
 - **Web content**: Users can seamlessly integrate any HTML, JS and CSS-based front-end framework for their interfaces.
 
-- **Event Control**: Listen for events in your application and selectively prevent their occurrence, allowing control over how your app's events behave.
+- **Event Control**: : Monitor multiple events and manage the app's behavior accordingly.
   
 - **Resources embedding**: Embed resources into your application's binary. This means you can bundle resources like HTML, CSS, and JavaScript directly into your application, reducing external dependencies and ensuring a more streamlined deployment.
 
@@ -51,13 +51,22 @@ For development purposes on Linux and BSD systems, ensure you have the required 
 - `sudo pkg install webkit2-gtk3`
 
 ### MacOS
-On macOS, you're in luck! WebKit is a native component of the macOS operating system. This means that you won't need to worry about additional installations, and everything should work seamlessly.
+On macOS, you're in luck! WebKit is a native component of the macOS operating system. This means that you won't need to worry about additional installations, and everything should work without problems.
 
 ### Windows
 For versions of Windows prior to Windows 11, make sure that both developers and end-users have the WebView2 runtime installed on their system. You can download and install it from the [official Microsoft WebView2 download page](https://developer.microsoft.com/microsoft-edge/webview2/).
 
+## How to build
+deskgui uses [CMake](https://cmake.org/) to configure and generate the necessary build files.
+
+To build the project, execute the following commands:
+```
+cmake -S . -B build
+cmake --build build
+```
+
 ## Examples
-Explore practical implementations in [examples](./examples).
+Explore more practical implementations in [examples](./examples).
 
 ### Basic example
 ```cpp
@@ -79,10 +88,10 @@ int main() {
   auto webview = window->createWebview("Webview");
   webview->navigate("https://www.google.com");
   
-  // Show window when webview content is ready to avoid white screen 🧭
+ // Show the window once the webview content is loaded to prevent a white screen 🧭
   webview->connect<deskgui::event::WebviewSourceChanged>([&window]() { window->show(); });
 
-  // Listen window resize event to resize webview 📐
+  // Listen window resize event to resize the webview 📐
   window->connect<deskgui::event::WindowResize>(
       [&webview](const deskgui::event::WindowResize& event) { webview->resize(event.size); });
 
@@ -95,11 +104,11 @@ int main() {
 
 The future development of deskgui includes the following planned features:
 
-- Drag and drop functionality
-- Desktop Bundler
-- App Signing
-- Native Notifications
-- And more exciting features to come! 🚀
+- [ ] Drag and drop
+- [ ] App Tray
+- [ ] App Signing
+- [ ] Native Notifications
+- [ ] And more exciting features to come! 🚀
 
 ## Licenses
 
