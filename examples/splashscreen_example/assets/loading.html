@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splash Screen with Spin Wheel</title>
+    <style>
+        body {
+            background-color: #272829;
+            justify-content: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+        }
+
+        .loading::after {
+            content: "";
+            width: 50px;
+            height: 50px;
+            border: 10px solid #89ee06;
+            border-top-color: #727272;
+            border-radius: 50%;
+            animation: loading 1s ease infinite;
+        }
+
+        @keyframes loading {
+            to {
+                transform: rotate(1turn);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <div class="loading loading--full-height"></div>
+    </div>
+    <h1 style="font-weight: bold; font-family:sans-serif; color: #c4c7c7;">
+        Loading...
+    </h1>
+</body>
+
+</html>
