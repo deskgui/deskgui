@@ -14,7 +14,7 @@ deskgui offers the following key features:
 
 - **Web content**: Users can seamlessly integrate any HTML, JS and CSS-based front-end framework for their interfaces.
 
-- **Event Control**: : Monitor multiple events and manage the app's behavior accordingly.
+- **Event Control**: Monitor multiple events and manage the app's behavior accordingly.
   
 - **Resources embedding**: Embed resources into your application's binary. This means you can bundle resources like HTML, CSS, and JavaScript directly into your application, reducing external dependencies and ensuring a more streamlined deployment.
 
