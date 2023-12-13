@@ -16,6 +16,12 @@ if(APPLE)
   enable_language(OBJC)
 endif()
 
+# ---- Properties ----
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+option(BUILD_EXAMPLES "Enable building project examples" ON)
+option(BUILD_TESTS_AND_BENCHMARKS "Build tests and benchmarks" ON)
+
 # ---- Include guards ----
 
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
@@ -24,11 +30,6 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
       "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there."
   )
 endif()
-
-# ---- Properties ----
-
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-option(BUILD_TESTS_AND_BENCHMARKS "Build tests and benchmarks" ON)
 
 # ---- Add source files ----
 
@@ -72,7 +73,9 @@ target_include_directories(
   ${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/source
 )
 
-add_subdirectory(examples examples)
+if(BUILD_EXAMPLES)
+  add_subdirectory(examples examples)
+endif()
 
 if(BUILD_TESTS_AND_BENCHMARKS)
   include(catch2)
