@@ -8,18 +8,17 @@
 #include "deskgui/webview.h"
 #include "nlohmann/json.hpp"
 
-
 using namespace deskgui;
 
 const std::string& Webview::getName() const { return name_; }
 
-void Webview::addCallback(const std::string& name, MessageCallback callback) {
-  callbacks_.emplace(name, callback);
-  auto script = "window['" + name + "'] = function(message) { const name = '" + name + "';" +
+void Webview::addCallback(const std::string& key, MessageCallback callback) {
+  callbacks_.emplace(key, callback);
+  auto script = "window['" + key + "'] = function(payload) { const key = '" + key + "';" +
                 R"(
                     window.webview.postMessage({
-                              name: name,
-                              message: message,
+                              key: key,
+                              payload: payload,
                             });
                     }
                 )";
@@ -27,22 +26,26 @@ void Webview::addCallback(const std::string& name, MessageCallback callback) {
   executeScript(script);
 }
 
-void Webview::removeCallback(const std::string& name) {
-  callbacks_.erase(name);
-  auto script = "delete window['" + name + "']";
+void Webview::removeCallback(const std::string& key) {
+  callbacks_.erase(key);
+  auto script = "delete window['" + key + "']";
   injectScript(script);
   executeScript(script);
+}
+
+void Webview::postMessage(const std::string& message) {
+  executeScript("window.webview.onMessage('" + message + "');");
 }
 
 void Webview::onMessage(const std::string& message) {
   auto json = nlohmann::json::parse(message);
   if (json.is_object()) {
-    if (json.contains("name") || json.contains("message")) {
-      auto callback = callbacks_.find(json["name"]);
+    if (json.contains("key") || json.contains("payload")) {
+      auto callback = callbacks_.find(json["key"]);
       if (callback != callbacks_.end()) {
-        callback->second(json["message"].dump());
+        callback->second(json["payload"].dump());
       }
-      emit(deskgui::event::WebviewOnMessage{message});
     }
   }
+  emit(deskgui::event::WebviewOnMessage{message});
 }
