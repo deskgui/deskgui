@@ -196,6 +196,13 @@ namespace deskgui {
     void postMessage(const std::string& message);
 
     /**
+     * @brief A callback function to handle incoming messages from the webview.
+     *
+     * @param message A message received from the webview.
+     */
+    void onMessage(const std::string& message);
+
+    /**
      * @brief Resizes the web view to the specified size.
      *
      * @param size The new size of the web view.
@@ -203,13 +210,6 @@ namespace deskgui {
     void resize(const ViewSize& size);
 
   private:
-    /**
-     * @brief A callback function to handle incoming messages from the webview.
-     *
-     * @param message A message received from the webview.
-     */
-    void onMessage(const std::string& message);
-
     // Pointer to the implementation
     std::unique_ptr<Impl> pImpl_{nullptr};
 
