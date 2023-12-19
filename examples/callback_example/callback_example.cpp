@@ -30,6 +30,9 @@ int main() {
   window->center();
 
   auto webview = window->createWebview(kWebviewName);
+  webview->enableContextMenu(true);
+  webview->enableDevTools(true);
+  
   window->connect<WindowResize>(
       [&webview](const WindowResize& event) { webview->resize(event.size); });
 
@@ -39,11 +42,14 @@ int main() {
     std::cout << "Counter value message " << message << std::endl;
   });
 
-  webview->addCallback("counter_reset", [](std::string message) {
+  webview->addCallback("counter_reset", [=](std::string message) {
     std::cout << "Counter reset " << message << std::endl;
+    // notify frontend that reset is processed...
+    webview->postMessage("Counter reset received on the C++ side! <3");
   });
 
-  // Connect class member function
+  // We can listen to all types of messages (including attached callbacks) by connecting to the
+  // WebviewOnMessage event.
   MessageDeserialization msgCallback;
   webview->connect<WebviewOnMessage>(&msgCallback, &MessageDeserialization::process);
 

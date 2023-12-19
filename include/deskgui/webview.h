@@ -174,26 +174,26 @@ namespace deskgui {
      * @brief Adds a callback function with the specified name.
      *
      * The callback is exposed as a global JavaScript function accessible via
-     * window.<callback-name>(message).
+     * window.<callback-key>(message).
      *
-     * @param name The name of the callback.
+     * @param key The name (key) of the callback.
      * @param callback The callback function to be invoked when the JavaScript function is called.
      */
-    void addCallback(const std::string& name, MessageCallback callback);
+    void addCallback(const std::string& key, MessageCallback callback);
 
     /**
-     * @brief Removes the callback function for the specified name.
+     * @brief Removes the callback function for the specified key.
      *
-     * @param name The name of the callback.
+     * @param key The key of the callback.
      */
-    void removeCallback(const std::string& name);
+    void removeCallback(const std::string& key);
 
     /**
-     * @brief Sends a message to the web view.
+     * @brief Sends a message to the webview.
      *
      * @param message The message to send.
      */
-    void onMessage(const std::string& message);
+    void postMessage(const std::string& message);
 
     /**
      * @brief Resizes the web view to the specified size.
@@ -203,6 +203,13 @@ namespace deskgui {
     void resize(const ViewSize& size);
 
   private:
+    /**
+     * @brief A callback function to handle incoming messages from the webview.
+     *
+     * @param message A message received from the webview.
+     */
+    void onMessage(const std::string& message);
+
     // Pointer to the implementation
     std::unique_ptr<Impl> pImpl_{nullptr};
 
