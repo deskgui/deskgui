@@ -20,5 +20,3 @@ FetchContent_Declare(RapidJSON
 
 # Make the JSON library available for the project
 FetchContent_MakeAvailable(RapidJSON)
-
-target_include_directories(${PROJECT_NAME} PRIVATE ${RapidJSON_SOURCE_DIR}/include)

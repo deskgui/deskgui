@@ -70,8 +70,9 @@ target_include_directories(
                          $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
 )
 target_include_directories(
-  ${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/source
+  ${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/source ${RapidJSON_SOURCE_DIR}/include
 )
+target_link_libraries(${PROJECT_NAME} PRIVATE PlatformWebview)
 
 if(BUILD_EXAMPLES)
   add_subdirectory(examples examples)
