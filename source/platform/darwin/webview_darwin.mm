@@ -6,7 +6,6 @@
  */
 
 #include "app_handler_darwin.h"
-#include "nlohmann/json.hpp"
 #include "webview_darwin_impl.h"
 
 using namespace deskgui;
