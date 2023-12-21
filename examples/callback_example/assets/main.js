@@ -14,7 +14,7 @@ window.webview.onMessage = (message) => {
 const addHit = () => {
   hits++;
   if (window.counter_value) {
-    window.counter_value({value: hits});
+    window.counter_value(hits);
   }
   renderHits();
 };
