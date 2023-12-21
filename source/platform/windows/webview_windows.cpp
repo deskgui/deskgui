@@ -8,7 +8,6 @@
 #include <shlwapi.h>
 
 #include <iostream>
-#include <nlohmann/json.hpp>
 
 #include "app_handler_windows.h"
 #include "webview_windows_impl.h"

@@ -5,8 +5,6 @@
  * MIT License
  */
 
-#include <nlohmann/json.hpp>
-
 #include "app_handler_linux.h"
 #include "webview_linux_impl.h"
 #include "window_linux_impl.h"

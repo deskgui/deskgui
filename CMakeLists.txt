@@ -63,7 +63,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(webview2_VERSION "1.0.1901.177" CACHE STRING "The WebView2 version to use")
 include(platform_webview)
-include(nlohmann)
+include(rapidjson)
 
 target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>

@@ -5,8 +5,11 @@
  * MIT License
  */
 
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 #include "deskgui/webview.h"
-#include "nlohmann/json.hpp"
 
 using namespace deskgui;
 
@@ -38,13 +41,22 @@ void Webview::postMessage(const std::string& message) {
 }
 
 void Webview::onMessage(const std::string& message) {
-  auto json = nlohmann::json::parse(message);
-  if (json.is_object()) {
-    if (json.contains("key") || json.contains("payload")) {
-      auto callback = callbacks_.find(json["key"]);
-      if (callback != callbacks_.end()) {
-        callback->second(json["payload"].dump());
-      }
+  rapidjson::Document doc;
+  doc.Parse(message.c_str());
+  if (!doc.HasParseError() && doc.IsObject()) {
+    if (doc.HasMember("key") || doc.HasMember("payload")) {
+      const auto& key = doc["key"];
+      if (key.IsString()) {
+            std::string keyStr = key.GetString();
+            auto callback = callbacks_.find(keyStr);
+            if (callback != callbacks_.end()) {
+                const auto& payload = doc["payload"];
+                rapidjson::StringBuffer buffer;
+                rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+                payload.Accept(writer);
+                callback->second(buffer.GetString());
+            }
+        }
     }
   }
   emit(deskgui::event::WebviewOnMessage{message});
