@@ -222,6 +222,16 @@ namespace deskgui {
      */
     [[nodiscard]] void* getNativeWindow();
 
+    /**
+     * @brief Retrieves the display scale factor.
+     *
+     * Retrieves the scaling factor representing the DPI (dots per inch) scale
+     * or display pixel density for the current screen or display.
+     *
+     * @return The display scale factor.
+     */
+    float getDisplayScaleFactor();
+
   private:
     // Window name
     std::string name_;

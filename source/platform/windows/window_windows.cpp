@@ -76,8 +76,8 @@ void Window::setSize(const ViewSize& size) {
   RECT windowRect;
   GetWindowRect(pImpl_->window, &windowRect);
 
-  int width = size.first * pImpl_->dpiScale_;
-  int height = size.second * pImpl_->dpiScale_;
+  int width = size.first * pImpl_->displayScaleFactor_;
+  int height = size.second * pImpl_->displayScaleFactor_;
 
   // Set window position and size
   SetWindowPos(pImpl_->window, nullptr, windowRect.right, windowRect.left, width, height,
@@ -90,7 +90,7 @@ void Window::setSize(const ViewSize& size) {
   }
 
   RECT rect;
-  GetClientRect(pImpl_->window, &rect);
+  GetWindowRect(pImpl_->window, &rect);
   return ViewSize{rect.right - rect.left, rect.bottom - rect.top};
 }
 
@@ -99,10 +99,10 @@ void Window::setPosition(const ViewRect& position) {
     return appHandler_->runOnMainThread([=] { setPosition(position); });
   }
   RECT r;
-  r.left = position.L;
-  r.top = position.T;
-  r.right = position.R;
-  r.bottom = position.B;
+  r.left = position.L * pImpl_->displayScaleFactor_;
+  r.top = position.T * pImpl_->displayScaleFactor_;
+  r.right = position.R * pImpl_->displayScaleFactor_;
+  r.bottom = position.B * pImpl_->displayScaleFactor_;
   SetWindowPos(pImpl_->window, nullptr, r.left, r.top, r.right - r.left, r.bottom - r.top,
                SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 }
@@ -198,7 +198,7 @@ void Window::setMaxSize(const ViewSize& size) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([=]() { setMaxSize(size); });
   }
-  maxSize_ = {size.first * pImpl_->dpiScale_, size.second * pImpl_->dpiScale_};
+  maxSize_ = {size.first * pImpl_->displayScaleFactor_, size.second * pImpl_->displayScaleFactor_};
 
   LONG windowStyle = GetWindowLong(pImpl_->window, GWL_STYLE);
   windowStyle &= ~WS_MAXIMIZEBOX;
@@ -206,5 +206,7 @@ void Window::setMaxSize(const ViewSize& size) {
 }
 
 void Window::setMinSize(const ViewSize& size) {
-  minSize_ = {size.first * pImpl_->dpiScale_, size.second * pImpl_->dpiScale_};
+  minSize_ = {size.first * pImpl_->displayScaleFactor_, size.second * pImpl_->displayScaleFactor_};
 }
+
+float Window::getDisplayScaleFactor() { return pImpl_->displayScaleFactor_; }

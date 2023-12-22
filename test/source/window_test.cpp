@@ -6,6 +6,10 @@
 
 #include "catch2/catch_all.hpp"
 
+deskgui::ViewSize pixelsToDips(deskgui::ViewSize size, float scale) {
+  return {size.first / scale, size.second / scale};
+}
+
 TEST_CASE("Window test") {
   deskgui::App app;
   auto window = app.createWindow("window");
@@ -21,19 +25,20 @@ TEST_CASE("Window test") {
   SECTION("Set and get size") {
     deskgui::ViewSize expectedSize = {600, 600};
     window->setSize(expectedSize);
-    CHECK(expectedSize == window->getSize());
+    auto val = window->getDisplayScaleFactor();
+    CHECK(expectedSize == pixelsToDips(window->getSize(), window->getDisplayScaleFactor()));
   }
 
   SECTION("Set and get max size") {
     deskgui::ViewSize expectedSize = {600, 600};
     window->setMaxSize(expectedSize);
-    CHECK(expectedSize == window->getMaxSize());
+    CHECK(expectedSize == pixelsToDips(window->getMaxSize(), window->getDisplayScaleFactor()));
   }
 
   SECTION("Set and get min size") {
     deskgui::ViewSize expectedSize = {600, 600};
     window->setMinSize(expectedSize);
-    CHECK(expectedSize == window->getMinSize());
+    CHECK(expectedSize == pixelsToDips(window->getMinSize(), window->getDisplayScaleFactor()));
   }
 
   SECTION("Set resizable") {
@@ -45,9 +50,15 @@ TEST_CASE("Window test") {
   }
 
   SECTION("Set and get window position") {
-    deskgui::ViewRect position{200, 100, 500, 600};
-    window->setPosition(position);
-    CHECK(position == window->getPosition());
+    deskgui::ViewRect expectedPosition{200, 100, 500, 600};
+    window->setPosition(expectedPosition);
+    auto position = window->getPosition();
+    auto scale = window->getDisplayScaleFactor();
+    position.L /= scale;
+    position.T /= scale;
+    position.R /= scale;
+    position.B /= scale;
+    CHECK(expectedPosition == position);
   }
 
   SECTION("Set and get decorated") {

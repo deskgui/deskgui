@@ -192,3 +192,5 @@ void Window::setMaxSize(const ViewSize& size) {
       = minSizeDefined_ ? GdkWindowHints(GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE) : GDK_HINT_MAX_SIZE;
   gtk_window_set_geometry_hints(pImpl_->window, nullptr, &hints, h);
 }
+
+float Window::getDisplayScaleFactor() { return 1.f; } // not implemented yed
