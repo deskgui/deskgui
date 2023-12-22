@@ -73,14 +73,13 @@ void Window::setSize(const ViewSize& size) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([=] { setSize(size); });
   }
-  RECT windowRect;
-  GetWindowRect(pImpl_->window, &windowRect);
+  RECT windowRect
+      = {0, 0, size.first * pImpl_->monitorScaleFactor_, size.second * pImpl_->monitorScaleFactor_};
+  AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, 0);
 
-  int width = size.first * pImpl_->displayScaleFactor_;
-  int height = size.second * pImpl_->displayScaleFactor_;
-
-  // Set window position and size
-  SetWindowPos(pImpl_->window, nullptr, windowRect.right, windowRect.left, width, height,
+  int windowWidth = windowRect.right - windowRect.left;
+  int windowHeight = windowRect.bottom - windowRect.top;
+  SetWindowPos(pImpl_->window, nullptr, windowRect.left, windowRect.top, windowWidth, windowHeight,
                SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE | SWP_FRAMECHANGED);
 }
 
@@ -90,7 +89,7 @@ void Window::setSize(const ViewSize& size) {
   }
 
   RECT rect;
-  GetWindowRect(pImpl_->window, &rect);
+  GetClientRect(pImpl_->window, &rect);
   return ViewSize{rect.right - rect.left, rect.bottom - rect.top};
 }
 
@@ -99,10 +98,10 @@ void Window::setPosition(const ViewRect& position) {
     return appHandler_->runOnMainThread([=] { setPosition(position); });
   }
   RECT r;
-  r.left = position.L * pImpl_->displayScaleFactor_;
-  r.top = position.T * pImpl_->displayScaleFactor_;
-  r.right = position.R * pImpl_->displayScaleFactor_;
-  r.bottom = position.B * pImpl_->displayScaleFactor_;
+  r.left = position.L * pImpl_->monitorScaleFactor_;
+  r.top = position.T * pImpl_->monitorScaleFactor_;
+  r.right = position.R * pImpl_->monitorScaleFactor_;
+  r.bottom = position.B * pImpl_->monitorScaleFactor_;
   SetWindowPos(pImpl_->window, nullptr, r.left, r.top, r.right - r.left, r.bottom - r.top,
                SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 }
@@ -180,15 +179,31 @@ void Window::center() {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([=]() { center(); });
   }
-  // Get the screen resolution or work area size
-  RECT screenRect;
-  GetWindowRect(pImpl_->window, &screenRect);
+  RECT windowRect;
+  GetWindowRect(pImpl_->window, &windowRect);
 
-  int xPos = (GetSystemMetrics(SM_CXSCREEN) - screenRect.right) / 2;
-  int yPos = (GetSystemMetrics(SM_CYSCREEN) - screenRect.bottom) / 2;
+  // Calculate the window width and height
+  int windowWidth = windowRect.right - windowRect.left;
+  int windowHeight = windowRect.bottom - windowRect.top;
+
+  // Get the screen dimensions
+  int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+  int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+  // Get the taskbar height
+  APPBARDATA appBarData;
+  appBarData.cbSize = sizeof(appBarData);
+  UINT taskbarHeight = 0;
+  if (SHAppBarMessage(ABM_GETTASKBARPOS, &appBarData)) {
+    taskbarHeight = appBarData.rc.bottom - appBarData.rc.top;
+  }
+
+  // Calculate the window position to center it, considering the taskbar
+  int xPos = (screenWidth - windowWidth) / 2;
+  int yPos = (screenHeight - windowHeight - taskbarHeight) / 2;
 
   // Set the new window position
-  SetWindowPos(pImpl_->window, NULL, xPos, yPos, 0, 0,
+  SetWindowPos(pImpl_->window, nullptr, xPos, yPos, 0, 0,
                SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 }
 
@@ -198,7 +213,7 @@ void Window::setMaxSize(const ViewSize& size) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([=]() { setMaxSize(size); });
   }
-  maxSize_ = {size.first * pImpl_->displayScaleFactor_, size.second * pImpl_->displayScaleFactor_};
+  maxSize_ = {size.first * pImpl_->monitorScaleFactor_, size.second * pImpl_->monitorScaleFactor_};
 
   LONG windowStyle = GetWindowLong(pImpl_->window, GWL_STYLE);
   windowStyle &= ~WS_MAXIMIZEBOX;
@@ -206,7 +221,7 @@ void Window::setMaxSize(const ViewSize& size) {
 }
 
 void Window::setMinSize(const ViewSize& size) {
-  minSize_ = {size.first * pImpl_->displayScaleFactor_, size.second * pImpl_->displayScaleFactor_};
+  minSize_ = {size.first * pImpl_->monitorScaleFactor_, size.second * pImpl_->monitorScaleFactor_};
 }
 
-float Window::getDisplayScaleFactor() { return pImpl_->displayScaleFactor_; }
+float Window::getMonitorScaleFactor() { return pImpl_->monitorScaleFactor_; }

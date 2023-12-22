@@ -25,20 +25,19 @@ TEST_CASE("Window test") {
   SECTION("Set and get size") {
     deskgui::ViewSize expectedSize = {600, 600};
     window->setSize(expectedSize);
-    auto val = window->getDisplayScaleFactor();
-    CHECK(expectedSize == pixelsToDips(window->getSize(), window->getDisplayScaleFactor()));
+    CHECK(expectedSize == pixelsToDips(window->getSize(), window->getMonitorScaleFactor()));
   }
 
   SECTION("Set and get max size") {
     deskgui::ViewSize expectedSize = {600, 600};
     window->setMaxSize(expectedSize);
-    CHECK(expectedSize == pixelsToDips(window->getMaxSize(), window->getDisplayScaleFactor()));
+    CHECK(expectedSize == pixelsToDips(window->getMaxSize(), window->getMonitorScaleFactor()));
   }
 
   SECTION("Set and get min size") {
     deskgui::ViewSize expectedSize = {600, 600};
     window->setMinSize(expectedSize);
-    CHECK(expectedSize == pixelsToDips(window->getMinSize(), window->getDisplayScaleFactor()));
+    CHECK(expectedSize == pixelsToDips(window->getMinSize(), window->getMonitorScaleFactor()));
   }
 
   SECTION("Set resizable") {
@@ -53,7 +52,7 @@ TEST_CASE("Window test") {
     deskgui::ViewRect expectedPosition{200, 100, 500, 600};
     window->setPosition(expectedPosition);
     auto position = window->getPosition();
-    auto scale = window->getDisplayScaleFactor();
+    auto scale = window->getMonitorScaleFactor();
     position.L /= scale;
     position.T /= scale;
     position.R /= scale;

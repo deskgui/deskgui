@@ -35,7 +35,7 @@ namespace deskgui {
     void registerWindowClass();
 
     Throttle throttle{kResizeThrottleInMs};
-    float displayScaleFactor_ = 1.f;
+    float monitorScaleFactor_ = 1.f;
   };
 
   inline float computeDpiScale(HWND hwnd) {
@@ -49,7 +49,7 @@ namespace deskgui {
                                                  WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
       case WM_CREATE: {
-        window->pImpl_->displayScaleFactor_ = computeDpiScale(hwnd);
+        window->pImpl_->monitorScaleFactor_ = computeDpiScale(hwnd);
       } break;
       case WM_CLOSE: {
         event::WindowClose closeEvent{};
@@ -85,7 +85,7 @@ namespace deskgui {
         window->emit<event::WindowResize>(window->getSize());
       } break;
       case WM_DPICHANGED: {
-        window->pImpl_->displayScaleFactor_ = computeDpiScale(hwnd);
+        window->pImpl_->monitorScaleFactor_ = computeDpiScale(hwnd);
       }
     }
     return true;

@@ -26,7 +26,7 @@ int main() {
   window->setTitle("My awesome webview!");
   window->setResizable(true);
   window->setMinSize({500, 500});
-  window->setSize({800, 800});
+  window->setSize({750, 750});
   window->center();
 
   auto webview = window->createWebview(kWebviewName);
