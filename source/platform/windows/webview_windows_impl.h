@@ -99,7 +99,7 @@ namespace deskgui {
     if (auto settings3 = settings.try_query<ICoreWebView2Settings3>(); settings3) {
       settings3->put_AreBrowserAcceleratorKeysEnabled(false);
     }
-
+    
     return true;
   }
 
