@@ -230,7 +230,7 @@ namespace deskgui {
      *
      * @return The display scale factor.
      */
-    float getDisplayScaleFactor();
+    float getMonitorScaleFactor();
 
   private:
     // Window name
