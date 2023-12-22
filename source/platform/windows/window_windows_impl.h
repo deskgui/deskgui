@@ -25,22 +25,32 @@ namespace deskgui {
     HWND window;
     static inline HINSTANCE hInstance;
 
-    static bool processWindowMessage(Window *window, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    static bool processWindowMessage(Window *window, HWND hwnd, UINT uMsg, WPARAM wParam,
+                                     LPARAM lParam);
     static LRESULT CALLBACK windowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-    static LRESULT CALLBACK subclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
+    static LRESULT CALLBACK subclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
                                          [[maybe_unused]] UINT_PTR uIdSubclass,
                                          DWORD_PTR dwRefData);
 
     void registerWindowClass();
 
     Throttle throttle{kResizeThrottleInMs};
+    float displayScaleFactor_ = 1.f;
   };
+
+  inline float computeDpiScale(HWND hwnd) {
+    float dpi = GetDpiForWindow(hwnd);
+    return dpi / USER_DEFAULT_SCREEN_DPI;
+  }
 
   // Process a common window message for the Window class. Return false to stop propagation of the
   // event
-  inline bool Window::Impl::processWindowMessage(Window *window, UINT uMsg, WPARAM wParam,
-                                                 LPARAM lParam) {
+  inline bool Window::Impl::processWindowMessage(Window *window, HWND hwnd, UINT uMsg,
+                                                 WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
+      case WM_CREATE: {
+        window->pImpl_->displayScaleFactor_ = computeDpiScale(hwnd);
+      } break;
       case WM_CLOSE: {
         event::WindowClose closeEvent{};
         window->emit(closeEvent);
@@ -74,31 +84,41 @@ namespace deskgui {
       case WM_EXITSIZEMOVE: {
         window->emit<event::WindowResize>(window->getSize());
       } break;
+      case WM_DPICHANGED: {
+        window->pImpl_->displayScaleFactor_ = computeDpiScale(hwnd);
+      }
     }
     return true;
   }
 
   // The main window procedure for the Window class
   inline LRESULT Window::Impl::windowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    auto *window = reinterpret_cast<class Window *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    Window *window;
+    if (uMsg == WM_CREATE) {
+      CREATESTRUCT *windowCreate = reinterpret_cast<CREATESTRUCT *>(lParam);
+      window = reinterpret_cast<Window *>(windowCreate->lpCreateParams);
+      SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)window);
+    } else {
+      window = reinterpret_cast<Window *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    }
 
     if (window) {
-      if (!processWindowMessage(window, uMsg, wParam, lParam)) return 0;
+      if (!processWindowMessage(window, hwnd, uMsg, wParam, lParam)) return 0;
     }
 
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
   }
 
   // The subclass window procedure attached to an external window
-  inline LRESULT Window::Impl::subclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
+  inline LRESULT Window::Impl::subclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
                                             [[maybe_unused]] UINT_PTR uIdSubclass,
                                             DWORD_PTR dwRefData) {
     auto *window = reinterpret_cast<class Window *>(dwRefData);
 
     if (window) {
-      if (!processWindowMessage(window, uMsg, wParam, lParam)) return 0;
+      if (!processWindowMessage(window, hwnd, uMsg, wParam, lParam)) return 0;
     }
-    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+    return DefSubclassProc(hwnd, uMsg, wParam, lParam);
   }
 
   // Register the window class for the Window

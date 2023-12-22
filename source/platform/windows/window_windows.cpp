@@ -17,6 +17,8 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
   if (nativeWindow == nullptr) {
     pImpl_->registerWindowClass();
 
+    SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+
     pImpl_->window = CreateWindowEx(0,                    // Optional window styles.
                                     CLASS_NAME,           // Window class
                                     L"deskgui window",    // Window text
@@ -30,7 +32,7 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
                                     nullptr,            // Parent window
                                     nullptr,            // Menu
                                     pImpl_->hInstance,  // Instance handle
-                                    nullptr             // Additional application data
+                                    this                // Additional application data
     );
 
     if (!pImpl_->window) {
@@ -40,8 +42,6 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
     pImpl_->window = static_cast<HWND>(nativeWindow);
     SetWindowSubclass(pImpl_->window, &Impl::subclassProc, 1, reinterpret_cast<DWORD_PTR>(this));
   }
-
-  SetWindowLongPtr(pImpl_->window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 }
 
 Window::~Window() {
@@ -73,12 +73,14 @@ void Window::setSize(const ViewSize& size) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([=] { setSize(size); });
   }
-  RECT r;
-  r.left = r.top = 0;
-  r.right = size.first;
-  r.bottom = size.second;
-  AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, 0);
-  SetWindowPos(pImpl_->window, nullptr, r.left, r.top, r.right - r.left, r.bottom - r.top,
+  RECT windowRect;
+  GetWindowRect(pImpl_->window, &windowRect);
+
+  int width = size.first * pImpl_->displayScaleFactor_;
+  int height = size.second * pImpl_->displayScaleFactor_;
+
+  // Set window position and size
+  SetWindowPos(pImpl_->window, nullptr, windowRect.right, windowRect.left, width, height,
                SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE | SWP_FRAMECHANGED);
 }
 
@@ -88,7 +90,7 @@ void Window::setSize(const ViewSize& size) {
   }
 
   RECT rect;
-  GetClientRect(pImpl_->window, &rect);
+  GetWindowRect(pImpl_->window, &rect);
   return ViewSize{rect.right - rect.left, rect.bottom - rect.top};
 }
 
@@ -97,10 +99,10 @@ void Window::setPosition(const ViewRect& position) {
     return appHandler_->runOnMainThread([=] { setPosition(position); });
   }
   RECT r;
-  r.left = position.L;
-  r.top = position.T;
-  r.right = position.R;
-  r.bottom = position.B;
+  r.left = position.L * pImpl_->displayScaleFactor_;
+  r.top = position.T * pImpl_->displayScaleFactor_;
+  r.right = position.R * pImpl_->displayScaleFactor_;
+  r.bottom = position.B * pImpl_->displayScaleFactor_;
   SetWindowPos(pImpl_->window, nullptr, r.left, r.top, r.right - r.left, r.bottom - r.top,
                SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 }
@@ -196,11 +198,15 @@ void Window::setMaxSize(const ViewSize& size) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([=]() { setMaxSize(size); });
   }
-  maxSize_ = size;
+  maxSize_ = {size.first * pImpl_->displayScaleFactor_, size.second * pImpl_->displayScaleFactor_};
 
   LONG windowStyle = GetWindowLong(pImpl_->window, GWL_STYLE);
   windowStyle &= ~WS_MAXIMIZEBOX;
   SetWindowLong(pImpl_->window, GWL_STYLE, windowStyle);
 }
 
-void Window::setMinSize(const ViewSize& size) { minSize_ = size; }
+void Window::setMinSize(const ViewSize& size) {
+  minSize_ = {size.first * pImpl_->displayScaleFactor_, size.second * pImpl_->displayScaleFactor_};
+}
+
+float Window::getDisplayScaleFactor() { return pImpl_->displayScaleFactor_; }

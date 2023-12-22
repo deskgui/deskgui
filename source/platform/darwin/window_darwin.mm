@@ -250,3 +250,5 @@ void Window::setMinSize(const ViewSize& size) {
   minSize_ = size;
   [pImpl_->window setContentMinSize:NSMakeSize(size.first, size.second)];
 }
+
+float Window::getDisplayScaleFactor() { return 1.f; } // not implemented yed
