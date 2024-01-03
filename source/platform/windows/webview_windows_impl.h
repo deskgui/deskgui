@@ -29,6 +29,7 @@ namespace deskgui {
 
     const std::string rootScheme_ = "https://localhost/";
     std::optional<EventRegistrationToken> webResourceRequestedToken_;
+    std::optional<EventRegistrationToken> acceleratorKeysToken_;
   };
 
   inline bool Webview::Impl::createWebviewInstance(HWND hWnd) {
@@ -97,9 +98,8 @@ namespace deskgui {
     settings->put_IsStatusBarEnabled(false);
 
     if (auto settings3 = settings.try_query<ICoreWebView2Settings3>(); settings3) {
-      settings3->put_AreBrowserAcceleratorKeysEnabled(false);
+      auto value = settings3->put_AreBrowserAcceleratorKeysEnabled(false);
     }
-    
     return true;
   }
 
