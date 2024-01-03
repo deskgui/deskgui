@@ -105,6 +105,7 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window)
                     }
                 };
                 )");
+  enableAcceleratorKeys(false);
   show(true);
 }
 
@@ -148,12 +149,31 @@ void Webview::enableAcceleratorKeys(bool state) {
     return appHandler_->runOnMainThread([=] { enableAcceleratorKeys(state); });
   }
 
-  wil::com_ptr<ICoreWebView2Settings> settings;
-  pImpl_->webview_->get_Settings(&settings);
-  if (auto settings3 = settings.try_query<ICoreWebView2Settings3>(); settings3) {
-    settings3->put_AreBrowserAcceleratorKeysEnabled(state);
+  if (state) {
+    if (pImpl_->acceleratorKeysToken_) {
+      pImpl_->webviewController_->remove_AcceleratorKeyPressed(
+          pImpl_->acceleratorKeysToken_.value());
+      pImpl_->acceleratorKeysToken_.reset();
+    }
+  } else {
+    if (!pImpl_->acceleratorKeysToken_) {
+      pImpl_->acceleratorKeysToken_ = EventRegistrationToken();
+
+      pImpl_->webviewController_->add_AcceleratorKeyPressed(
+          Callback<ICoreWebView2AcceleratorKeyPressedEventHandler>(
+              [this](ICoreWebView2Controller* sender,
+                     ICoreWebView2AcceleratorKeyPressedEventArgs* args) -> HRESULT {
+                wil::com_ptr<ICoreWebView2AcceleratorKeyPressedEventArgs2> args2;
+                args->QueryInterface(IID_PPV_ARGS(&args2));
+                if (args2) {
+                  args2->put_IsBrowserAcceleratorKeyEnabled(FALSE);
+                }
+                return S_OK;
+              })
+              .Get(),
+          &pImpl_->acceleratorKeysToken_.value());
+    }
   }
-  pImpl_->webview_->Reload();
 }
 
 void Webview::resize(const ViewSize& size) {
