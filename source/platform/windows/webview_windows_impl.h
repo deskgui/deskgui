@@ -98,7 +98,7 @@ namespace deskgui {
     settings->put_IsStatusBarEnabled(false);
 
     if (auto settings3 = settings.try_query<ICoreWebView2Settings3>(); settings3) {
-      auto value = settings3->put_AreBrowserAcceleratorKeysEnabled(false);
+      settings3->put_AreBrowserAcceleratorKeysEnabled(false);
     }
     return true;
   }
