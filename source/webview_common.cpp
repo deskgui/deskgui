@@ -44,7 +44,7 @@ void Webview::onMessage(const std::string& message) {
   rapidjson::Document doc;
   doc.Parse(message.c_str());
   if (!doc.HasParseError() && doc.IsObject()) {
-    if (doc.HasMember("key") || doc.HasMember("payload")) {
+    if (doc.HasMember("key") && doc.HasMember("payload")) {
       const auto& key = doc["key"];
       if (key.IsString()) {
             std::string keyStr = key.GetString();
