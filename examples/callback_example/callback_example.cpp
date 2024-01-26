@@ -38,11 +38,11 @@ int main() {
 
   // This C++ callback is exposed as a global JavaScript function, `window.counter_value()`.
   // When `window.counter_value()` is called in JavaScript, this callback will be triggered.
-  webview->addCallback("counter_value", [](std::string message) {
+  webview->addCallback("counter_value", [](std::string_view message) {
     std::cout << "Counter value message " << message << std::endl;
   });
 
-  webview->addCallback("counter_reset", [=](std::string message) {
+  webview->addCallback("counter_reset", [=](std::string_view message) {
     std::cout << "Counter reset " << message << std::endl;
     // notify frontend that reset is processed...
     webview->postMessage("Counter reset received on the C++ side! <3");

@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <functional>
 #include <string>
+#include <string_view>
 
 namespace deskgui {
   // Defines the size of a view, represented by width and height.
@@ -31,7 +32,7 @@ namespace deskgui {
   static const ViewRect kDefaultWindowRect = {0, 0, 600, 600};
 
   // Callback function type for receiving messages.
-  using MessageCallback = std::function<void(std::string)>;
+  using MessageCallback = std::function<void(std::string_view)>;
 
   typedef size_t UniqueId;
 
