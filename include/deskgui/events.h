@@ -20,7 +20,7 @@ namespace deskgui {
      */
     class Event {
     public:
-      Event(bool cancellable = false) : cancelled_(false), cancellable_(cancellable) {}
+      explicit Event(bool cancellable = false) : cancelled_(false), cancellable_(cancellable) {}
       Event(const Event& other) = delete;
       virtual ~Event() = default;
 
@@ -44,7 +44,7 @@ namespace deskgui {
      */
     struct WindowShow : Event {
       WindowShow(bool show) : Event(true), state(show) {}
-      bool state;  // True if the window is shown, false if hidden.
+      const bool state;  // True if the window is shown, false if hidden.
     };
 
     /**
@@ -52,7 +52,7 @@ namespace deskgui {
      */
     struct WindowResize : Event {
       WindowResize(const ViewSize& viewSize) : Event(true), size(viewSize) {}
-      ViewSize size;  // The new size of the window after resizing.
+      const ViewSize size;  // The new size of the window after resizing.
     };
 
     struct WindowClose : Event {
@@ -63,17 +63,17 @@ namespace deskgui {
 
     struct WebviewOnMessage : Event {
       WebviewOnMessage(const std::string& message) : Event(true), message(message) {}
-      std::string message;
+      const std::string message;
     };
 
     struct WebviewNavigationStarting : Event {
       WebviewNavigationStarting(const std::string& url) : Event(true), url(url) {}
-      std::string url;
+      const std::string url;
     };
 
     struct WebviewFrameNavigationStarting : Event {
       WebviewFrameNavigationStarting(const std::string& url) : Event(true), url(url) {}
-      std::string url;
+      const std::string url;
     };
 
     /**
@@ -81,7 +81,7 @@ namespace deskgui {
      */
     struct WebviewSourceChanged : Event {
       WebviewSourceChanged(const std::string& src) : Event(false), source(src) {}
-      std::string source;  // The new source URL of the webview.
+      const std::string source;  // The new source URL of the webview.
     };
 
     /**
@@ -89,7 +89,7 @@ namespace deskgui {
      */
     struct WebviewContentLoaded : Event {
       WebviewContentLoaded(bool loaded) : Event(false), state(loaded) {}
-      bool state;  // True if the webview content is fully loaded, false otherwise.
+      const bool state;  // True if the webview content is fully loaded, false otherwise.
     };
 
   }  // namespace event
