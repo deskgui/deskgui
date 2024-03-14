@@ -22,7 +22,7 @@
 namespace deskgui {
 
   struct Webview::Impl {
-    bool createWebviewInstance(HWND hWnd, const WebViewOptions& options);
+    bool createWebviewInstance(HWND hWnd, const WebviewOptions& options);
 
     wil::com_ptr<ICoreWebView2> webview_;
     wil::com_ptr<ICoreWebView2Controller> webviewController_;
@@ -32,28 +32,28 @@ namespace deskgui {
     std::optional<EventRegistrationToken> acceleratorKeysToken_;
   };
 
-  inline bool Webview::Impl::createWebviewInstance(HWND hWnd, const WebViewOptions& options) {
+  inline bool Webview::Impl::createWebviewInstance(HWND hWnd, const WebviewOptions& options) {
     using namespace Microsoft::WRL;
 
     ComPtr environmentOptions = Make<CoreWebView2EnvironmentOptions>();
 
     std::wstring additionalArguments;
 
-    if (options.hasOption(WebViewOptions::kRemoteDebuggingPort)) {
-      const int port = options.getOption<int>(WebViewOptions::kRemoteDebuggingPort);
+    if (options.hasOption(WebviewOptions::kRemoteDebuggingPort)) {
+      const int port = options.getOption<int>(WebviewOptions::kRemoteDebuggingPort);
       additionalArguments += L"--remote-debugging-port=" + std::to_wstring(port);
       additionalArguments += L" ";
     }
 
-    if (options.hasOption(WebViewOptions::kDisableGpu)) {
-      if (const auto option = options.getOption<bool>(WebViewOptions::kDisableGpu); option) {
+    if (options.hasOption(WebviewOptions::kDisableGpu)) {
+      if (const auto option = options.getOption<bool>(WebviewOptions::kDisableGpu); option) {
         additionalArguments += L"--disable-gpu";
         additionalArguments += L" ";
       }
     }
 
-    if (options.hasOption(WebViewOptions::kAllowFileAccessFromFiles)) {
-      if (const auto option = options.getOption<bool>(WebViewOptions::kAllowFileAccessFromFiles);
+    if (options.hasOption(WebviewOptions::kAllowFileAccessFromFiles)) {
+      if (const auto option = options.getOption<bool>(WebviewOptions::kAllowFileAccessFromFiles);
           option) {
         additionalArguments += L"--allow-file-access-from-files";
         additionalArguments += L" ";

@@ -23,8 +23,8 @@ int main() {
   window->setSize({800, 800});
   window->center();
 
-  WebViewOptions options;
-  options.setOption(WebViewOptions::kRemoteDebuggingPort, 9222);
+  WebviewOptions options;
+  options.setOption(WebviewOptions::kRemoteDebuggingPort, 9222);
 
   auto webview = window->createWebview("webview", options);
 

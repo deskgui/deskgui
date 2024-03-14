@@ -21,7 +21,7 @@
 
 using namespace deskgui;
 
-Webview* Window::createWebview(const std::string& name, const WebViewOptions& options) {
+Webview* Window::createWebview(const std::string& name, const WebviewOptions& options) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([=] { return createWebview(name, options); });
   }

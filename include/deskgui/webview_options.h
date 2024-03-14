@@ -13,7 +13,7 @@
 #include <variant>
 
 namespace deskgui {
-  class WebViewOptions {
+  class WebviewOptions {
   public:
     using Option = std::variant<bool, int>;
 

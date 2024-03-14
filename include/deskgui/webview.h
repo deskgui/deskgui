@@ -45,7 +45,7 @@ namespace deskgui {
      *               - On MacOS, it should be of type NSWindow.
      *               - On Linux, it should be of type GtkWindow.
      */
-    explicit Webview(const std::string& name, AppHandler* appHandler, void* window, const WebViewOptions& options);
+    explicit Webview(const std::string& name, AppHandler* appHandler, void* window, const WebviewOptions& options);
 
   public:
     /**
