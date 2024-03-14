@@ -26,3 +26,7 @@ resource_compiler(
     PACK_NAME "demo_resources"
     ROOT_FOLDER "/assets"
 )
+
+# Set macOS bundle properties
+set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.example.${executable_name}")
+set(MACOSX_BUNDLE_BUNDLE_NAME ${executable_name})

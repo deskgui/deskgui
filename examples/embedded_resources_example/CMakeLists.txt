@@ -16,6 +16,10 @@ include(resource_compiler/resource_compiler)
 # Specify the assets
 file(GLOB_RECURSE ASSETS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/*)
 
+# Set macOS bundle properties
+set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.example.${executable_name}")
+set(MACOSX_BUNDLE_BUNDLE_NAME ${executable_name})
+
 resource_compiler(
     TARGET_NAME  ${executable_name}
     RESOURCE_FILES "${ASSETS_FILES}"
