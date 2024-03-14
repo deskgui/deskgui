@@ -15,8 +15,9 @@ namespace deskgui {
 
   // Represents a resource, including its scheme, resource, and type.
   struct Resource {
-    std::string scheme;  // The URL scheme of resource (e.g., "static/assets/", "data/js/").
-    std::vector<std::uint8_t> data;  // The resource content
+    std::string scheme;        // The URL scheme of resource (e.g., "static/assets/", "data/js/").
+    const std::uint8_t* data;  // The resource content
+    std::size_t size;    // Size of the resource content
     std::string mime;  // The resource mime (e.g., "text/html", "application/javascript", ...).
   };
 
@@ -24,9 +25,5 @@ namespace deskgui {
 
 #ifdef COMPILED_RESOURCES_ENABLED
   Resources getCompiledResources(const std::string& name);
-
-#  ifdef RESOURCE_COMPRESSION_ENABLED
-  const std::vector<std::uint8_t> decompress(const std::vector<std::uint8_t>& data);
-#  endif
 #endif
 }  // namespace deskgui
