@@ -93,7 +93,7 @@ namespace deskgui {
                            });
 
     if (it != self->resources_.end()) {
-      GBytes* bytes = g_bytes_new(it->data.data(), it->data.size());
+      GBytes* bytes = g_bytes_new(it->data, it->size);
 
       if (!bytes) {
         GError* error = nullptr;

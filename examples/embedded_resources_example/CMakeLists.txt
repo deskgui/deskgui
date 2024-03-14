@@ -20,6 +20,5 @@ resource_compiler(
     TARGET_NAME  ${executable_name}
     RESOURCE_FILES "${ASSETS_FILES}"
     PACK_NAME "web_resources"
-    COMPRESS TRUE
     ROOT_FOLDER "/assets"
 )

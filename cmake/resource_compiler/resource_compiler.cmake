@@ -7,7 +7,6 @@ set(resource_compiler_build ${CMAKE_BINARY_DIR}/resource_compiler)
 
 # Define a CMake function to pack files into a resource library
 macro(resource_compiler)
-    set(options COMPRESS)
     set(oneValueArgs TARGET_NAME PACK_NAME ROOT_FOLDER)
     set(multiValueArgs RESOURCE_FILES)
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -23,9 +22,10 @@ macro(resource_compiler)
     
     # Set current directory and build directory
     set(current_resource_compiler_build ${resource_compiler_build}/${ARG_TARGET_NAME})
-    if(NOT EXISTS ${current_resource_compiler_build}/)
-        file(MAKE_DIRECTORY ${current_resource_compiler_build})
+    if(EXISTS ${current_resource_compiler_build}/)
+        file(REMOVE_RECURSE ${current_resource_compiler_build})
     endif()
+    file(MAKE_DIRECTORY ${current_resource_compiler_build})
 
     # Paths for resource compiler
     set(resource_compiler_cpp ${current_resource_compiler_build}/resource_compiler.cpp)
@@ -41,7 +41,7 @@ macro(resource_compiler)
     find_package(Python COMPONENTS Interpreter)
     # Call generate_resource.py script
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E env ${Python_EXECUTABLE} ${current_dir}/generate_resources.py ${build_dir} ${ARG_PACK_NAME} ${resource_compiler_cpp} ${RELATIVE_RESOURCES_FILES} ${ARG_COMPRESS}
+        COMMAND ${CMAKE_COMMAND} -E env ${Python_EXECUTABLE} ${current_dir}/generate_resources.py ${build_dir} ${ARG_PACK_NAME} ${resource_compiler_cpp} ${RELATIVE_RESOURCES_FILES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_ROOT_FOLDER}
     )
 
@@ -53,15 +53,6 @@ macro(resource_compiler)
 
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
     set_target_properties(${ARG_PACK_NAME} PROPERTIES FOLDER "resources")
-
-    # Conditionally include zlib and enable compression
-    if(ARG_COMPRESS)
-        include(${current_dir}/zlib.cmake)
-        add_zlib_to_target(${ARG_PACK_NAME})
-        set_target_properties(zlibstatic example minigzip zlib PROPERTIES FOLDER "resources")
-        target_compile_definitions(${ARG_PACK_NAME} PRIVATE RESOURCE_COMPRESSION_ENABLED)
-        target_compile_definitions(${ARG_TARGET_NAME} PRIVATE RESOURCE_COMPRESSION_ENABLED)
-    endif()
 
     # Link the resource library to the target
     target_link_libraries(${ARG_TARGET_NAME} PRIVATE ${ARG_PACK_NAME})
