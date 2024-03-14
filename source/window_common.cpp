@@ -21,15 +21,15 @@
 
 using namespace deskgui;
 
-Webview* Window::createWebview(const std::string& name) {
+Webview* Window::createWebview(const std::string& name, const WebViewOptions& options) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return createWebview(name); });
+    return appHandler_->runOnMainThread([=] { return createWebview(name, options); });
   }
   std::lock_guard<std::mutex> lock(webviewsMutex_);
 
   try {
     auto result = webviews_.emplace(
-        name, std::unique_ptr<Webview>(new Webview(name, appHandler_, getNativeWindow())));
+        name, std::unique_ptr<Webview>(new Webview(name, appHandler_, getNativeWindow(), options)));
     if (result.second) {
       auto& webview = result.first->second;
       return webview.get();

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <deskgui/webview_options.h>
 #include <deskgui/app_handler.h>
 #include <deskgui/event_bus.h>
 #include <deskgui/resource_compiler.h>
@@ -44,7 +45,7 @@ namespace deskgui {
      *               - On MacOS, it should be of type NSWindow.
      *               - On Linux, it should be of type GtkWindow.
      */
-    explicit Webview(const std::string& name, AppHandler* appHandler, void* window);
+    explicit Webview(const std::string& name, AppHandler* appHandler, void* window, const WebViewOptions& options);
 
   public:
     /**

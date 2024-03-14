@@ -133,7 +133,7 @@ extern NSString* const kScriptMessageCallback = @"deskgui_callback";
 
 @end
 
-Webview::Webview(const std::string& name, AppHandler* appHandler, void* window)
+Webview::Webview(const std::string& name, AppHandler* appHandler, void* window, const WebViewOptions& options)
     : name_(name), appHandler_(appHandler), pImpl_(std::make_unique<Impl>()) {
   if (window == nullptr) {
     throw std::invalid_argument("Window is a nullptr");
