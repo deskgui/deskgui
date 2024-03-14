@@ -106,7 +106,7 @@ namespace deskgui {
 
       GInputStream* inputStream = G_INPUT_STREAM(g_memory_input_stream_new_from_bytes(bytes));
 
-      webkit_uri_scheme_request_finish(request, inputStream, it->data.size(), it->mime.c_str());
+      webkit_uri_scheme_request_finish(request, inputStream, it->size, it->mime.c_str());
       g_object_unref(inputStream);
       g_bytes_unref(bytes);
       return;
