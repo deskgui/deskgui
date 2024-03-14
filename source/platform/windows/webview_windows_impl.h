@@ -22,7 +22,7 @@
 namespace deskgui {
 
   struct Webview::Impl {
-    bool createWebviewInstance(HWND hWnd);
+    bool createWebviewInstance(HWND hWnd, const WebviewOptions& options);
 
     wil::com_ptr<ICoreWebView2> webview_;
     wil::com_ptr<ICoreWebView2Controller> webviewController_;
@@ -32,14 +32,35 @@ namespace deskgui {
     std::optional<EventRegistrationToken> acceleratorKeysToken_;
   };
 
-  inline bool Webview::Impl::createWebviewInstance(HWND hWnd) {
+  inline bool Webview::Impl::createWebviewInstance(HWND hWnd, const WebviewOptions& options) {
     using namespace Microsoft::WRL;
 
-    ComPtr options = Make<CoreWebView2EnvironmentOptions>();
+    ComPtr environmentOptions = Make<CoreWebView2EnvironmentOptions>();
 
-    // Uncomment the following line to enable remote debugging
-    // options->put_AdditionalBrowserArguments(L"--remote-debugging-port=9222");
-    options->put_AdditionalBrowserArguments(L"--disable-gpu");
+    std::wstring additionalArguments;
+
+    if (options.hasOption(WebviewOptions::kRemoteDebuggingPort)) {
+      const int port = options.getOption<int>(WebviewOptions::kRemoteDebuggingPort);
+      additionalArguments += L"--remote-debugging-port=" + std::to_wstring(port);
+      additionalArguments += L" ";
+    }
+
+    if (options.hasOption(WebviewOptions::kDisableGpu)) {
+      if (const auto option = options.getOption<bool>(WebviewOptions::kDisableGpu); option) {
+        additionalArguments += L"--disable-gpu";
+        additionalArguments += L" ";
+      }
+    }
+
+    if (options.hasOption(WebviewOptions::kAllowFileAccessFromFiles)) {
+      if (const auto option = options.getOption<bool>(WebviewOptions::kAllowFileAccessFromFiles);
+          option) {
+        additionalArguments += L"--allow-file-access-from-files";
+        additionalArguments += L" ";
+      }
+    }
+
+    environmentOptions->put_AdditionalBrowserArguments(additionalArguments.c_str());
 
     HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (FAILED(hr)) {
@@ -53,7 +74,7 @@ namespace deskgui {
     flag.test_and_set();
 
     CreateCoreWebView2EnvironmentWithOptions(
-        nullptr, temp.c_str(), options.Get(),
+        nullptr, temp.c_str(), environmentOptions.Get(),
         Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
             [&]([[maybe_unused]] HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
               env->CreateCoreWebView2Controller(

@@ -23,7 +23,10 @@ int main() {
   window->setSize({800, 800});
   window->center();
 
-  auto webview = window->createWebview("webview");
+  WebviewOptions options;
+  options.setOption(WebviewOptions::kRemoteDebuggingPort, 9222);
+
+  auto webview = window->createWebview("webview", options);
 
   webview->loadResources(getCompiledResources("web_resources"));
   webview->serveResource("index.html");

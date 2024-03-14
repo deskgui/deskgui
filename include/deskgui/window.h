@@ -71,7 +71,7 @@ namespace deskgui {
      * @param name The name of the Webview.
      * @return A pointer to the created Webview.
      */
-    Webview* createWebview(const std::string& name);
+    Webview* createWebview(const std::string& name, const WebviewOptions& options = {});
 
     /**
      * Destroy the Webview with the specified name.
