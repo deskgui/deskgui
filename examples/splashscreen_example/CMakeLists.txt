@@ -17,7 +17,6 @@ resource_compiler(
     TARGET_NAME  ${executable_name}
     RESOURCE_FILES "assets/loading.html"
     PACK_NAME "splashscreen_resources"
-    COMPRESS TRUE
     ROOT_FOLDER "/assets"
 )
 
@@ -25,6 +24,9 @@ resource_compiler(
     TARGET_NAME  ${executable_name}
     RESOURCE_FILES "assets/helloworld.html"
     PACK_NAME "demo_resources"
-    COMPRESS TRUE
     ROOT_FOLDER "/assets"
 )
+
+# Set macOS bundle properties
+set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.example.${executable_name}")
+set(MACOSX_BUNDLE_BUNDLE_NAME ${executable_name})

@@ -110,7 +110,7 @@ extern NSString* const kScriptMessageCallback = @"deskgui_callback";
         [&](const deskgui::Resource& resource) { return resource.scheme == resourceScheme; });
 
     if (it != resources_->end()) {
-      NSData* resourceData = [NSData dataWithBytes:it->data.data() length:it->data.size()];
+      NSData* resourceData = [NSData dataWithBytes:it->data length:it->size];
       NSString* mime = [NSString stringWithUTF8String:it->mime.c_str()];
       // Create a NSURLResponse with the resource data
       NSURLResponse* response = [[NSURLResponse alloc] initWithURL:urlSchemeTask.request.URL

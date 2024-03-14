@@ -277,8 +277,8 @@ void Webview::loadResources(const Resources& resources) {
 
                   // Create an IStream object from the content
                   wil::com_ptr<IStream> contentStream
-                      = SHCreateMemStream(reinterpret_cast<const BYTE*>(it->data.data()),
-                                          static_cast<UINT>(it->data.size()));
+                      = SHCreateMemStream(reinterpret_cast<const BYTE*>(it->data),
+                                          static_cast<UINT>(it->size));
 
                   wil::com_ptr<ICoreWebView2WebResourceResponse> response;
                   hr = env->CreateWebResourceResponse(contentStream.get(), 200, L"OK",
