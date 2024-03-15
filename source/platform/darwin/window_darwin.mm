@@ -77,6 +77,7 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
     [pImpl_->window center];
     [pImpl_->window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
   } else {
+    isExternalWindow_ = true;
     pImpl_->window = static_cast<NSWindow*>(nativeWindow);
   }
   if (!pImpl_->window) {
@@ -92,9 +93,11 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
 }
 
 Window::~Window() {
-  [pImpl_->window close];
-  [pImpl_->window release];
-  pImpl_->window = nil;
+  if (!isExternalWindow_ && pImpl_->window != nil) {
+    [pImpl_->window close];
+    [pImpl_->window release];
+    pImpl_->window = nil;
+  }
 }
 
 void Window::setTitle(const std::string& title) {
