@@ -1,0 +1,9 @@
+{
+    "version": 4,
+    "vendor": {
+        "conan": {}
+    },
+    "include": [
+        "C:\\Users\\Marc\\.conan\\data\\deskgui\\0.0.1\\_\\_\\build\\5a61a86bb3e07ce4262c80e1510f9c05e9b6d48b\\CMakePresets.json"
+    ]
+}
