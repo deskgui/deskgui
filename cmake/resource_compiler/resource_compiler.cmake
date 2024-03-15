@@ -22,10 +22,9 @@ macro(resource_compiler)
     
     # Set current directory and build directory
     set(current_resource_compiler_build ${resource_compiler_build}/${ARG_TARGET_NAME})
-    if(EXISTS ${current_resource_compiler_build}/)
-        file(REMOVE_RECURSE ${current_resource_compiler_build})
+    if(NOT EXISTS ${current_resource_compiler_build}/)
+        file(MAKE_DIRECTORY ${current_resource_compiler_build})
     endif()
-    file(MAKE_DIRECTORY ${current_resource_compiler_build})
 
     # Paths for resource compiler
     set(resource_compiler_cpp ${current_resource_compiler_build}/resource_compiler.cpp)

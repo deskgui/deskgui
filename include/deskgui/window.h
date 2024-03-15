@@ -249,6 +249,7 @@ namespace deskgui {
     // Minimum and maximum window sizes
     ViewSize minSize_, maxSize_;
     bool minSizeDefined_{false}, maxSizeDefined_{false};
+    bool isExternalWindow_{false};
   };
 
 }  // namespace deskgui
