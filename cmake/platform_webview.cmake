@@ -5,6 +5,8 @@
 # Include the FetchContent module to fetch external libraries
 include(FetchContent)
 
+add_library(PlatformWebview INTERFACE)
+
 # Linux configuration
 if (UNIX AND NOT APPLE)
   # Find and configure the required GTK and WebKit libraries using pkg-config
@@ -14,17 +16,17 @@ if (UNIX AND NOT APPLE)
 
   # Suppress deprecation warnings for the linked library
   if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-    target_compile_options(PkgConfig::webkit PRIVATE -Wno-deprecated-declarations)
+    target_compile_options(PkgConfig::webkit INTERFACE -Wno-deprecated-declarations)
   endif ()
 
   # Link the GTK and WebKit libraries to the target
-  target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::gtk PkgConfig::webkit)
+  target_link_libraries(PlatformWebview INTERFACE PkgConfig::gtk PkgConfig::webkit)
 endif()
 
 # macOS configuration
 if (APPLE)
   # Link the necessary frameworks to the target
-  target_link_libraries(${PROJECT_NAME} PRIVATE "-framework Webkit -framework Carbon -framework Cocoa")
+  target_link_libraries(PlatformWebview INTERFACE "-framework Webkit -framework Carbon -framework Cocoa")
   
   # Enable Objective-C and Objective-C++ languages
   enable_language(OBJC)
@@ -40,16 +42,16 @@ if (WIN32)
   download_nuget_package(WebView2 "Microsoft.Web.WebView2" ${webview2_VERSION})
   
   # Add Unicode definitions for Windows compilation
-  target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE=1 _UNICODE=1)
+  target_compile_definitions(PlatformWebview INTERFACE UNICODE=1 _UNICODE=1)
   
   # Include the WebView2 header files
-  target_include_directories(${PROJECT_NAME} PRIVATE ${WebView2_PATH}/build/native/include)
+  target_include_directories(PlatformWebview INTERFACE ${WebView2_PATH}/build/native/include)
   
   # Link the WebView2 library based on the architecture
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-      target_link_libraries(${PROJECT_NAME} PRIVATE ${WebView2_PATH}/build/native/x64/WebView2LoaderStatic.lib)
+      target_link_libraries(PlatformWebview INTERFACE ${WebView2_PATH}/build/native/x64/WebView2LoaderStatic.lib)
   else()
-      target_link_libraries(${PROJECT_NAME} PRIVATE ${WebView2_PATH}/build/native/x86/WebView2LoaderStatic.lib)
+      target_link_libraries(PlatformWebview INTERFACE ${WebView2_PATH}/build/native/x86/WebView2LoaderStatic.lib)
   endif()
   
   # Disable building packaging and tests for the Windows Implementation Library (WIL)
@@ -61,5 +63,5 @@ if (WIN32)
   FetchContent_MakeAvailable(wil)
   
   # Link the WIL library and comctl32 library to the target
-  target_link_libraries(${PROJECT_NAME} PRIVATE WIL::WIL comctl32.lib Shlwapi.lib)
+  target_link_libraries(PlatformWebview INTERFACE WIL::WIL comctl32.lib Shlwapi)
 endif()

@@ -2,7 +2,7 @@
 # Copyright (c) 2023 deskgui
 # MIT License
 
-cmake_minimum_required(VERSION 3.24 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.14...3.22)
 
 # ---- Project ----
 
