@@ -51,6 +51,8 @@ list(APPEND sources ${platform_sources})
 
 # ---- Create library ----
 
+# Note: for header-only libraries change all PUBLIC flags to INTERFACE and create an interface
+# target: add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_NAME} ${headers} ${sources})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 LINKER_LANGUAGE CXX)
 
@@ -70,6 +72,7 @@ target_include_directories(
 target_include_directories(
   ${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/source ${RapidJSON_SOURCE_DIR}/include
 )
+target_link_libraries(${PROJECT_NAME} PRIVATE PlatformWebview)
 
 if(BUILD_EXAMPLES)
   add_subdirectory(examples examples)
