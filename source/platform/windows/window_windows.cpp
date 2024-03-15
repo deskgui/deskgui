@@ -41,14 +41,14 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
       throw std::system_error(static_cast<int>(GetLastError()), std::system_category());
     }
   } else {
-    isExternalWindow = true;
+    isExternalWindow_ = true;
     pImpl_->window = static_cast<HWND>(nativeWindow);
     SetWindowSubclass(pImpl_->window, &Impl::subclassProc, 1, reinterpret_cast<DWORD_PTR>(this));
   }
 }
 
 Window::~Window() {
-  if (!isExternalWindow && IsWindow(pImpl_->window)) {
+  if (!isExternalWindow_ && IsWindow(pImpl_->window)) {
     DestroyWindow(pImpl_->window);
     pImpl_->window = nullptr;
   }

@@ -15,7 +15,7 @@ using namespace deskgui;
 Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWindow)
     : pImpl_{std::make_unique<Impl>()}, name_(name), appHandler_(appHandler) {
   if (nativeWindow != nullptr) {
-    isExternalWindow = true;
+    isExternalWindow_ = true;
     pImpl_->window = GTK_WINDOW(nativeWindow);
   } else {
     gtk_init(nullptr, nullptr);
@@ -38,7 +38,7 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
 }
 
 Window::~Window() {
-  if (!isExternalWindow && pImpl_->window != nullptr) {
+  if (!isExternalWindow_ && pImpl_->window != nullptr) {
     gtk_widget_destroy(GTK_WIDGET(pImpl_->window));
     pImpl_->window = nullptr;
   }
