@@ -17,7 +17,7 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
   if (nativeWindow == nullptr) {
     pImpl_->registerWindowClass();
 
-    SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+    SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
 
     pImpl_->window = CreateWindowEx(0,                    // Optional window styles.
                                     CLASS_NAME,           // Window class
