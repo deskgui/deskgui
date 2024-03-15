@@ -25,9 +25,6 @@ endif()
 
 # macOS configuration
 if (APPLE)
-  # Find and configure the required frameworks
-  find_package(PkgConfig REQUIRED)
-  
   # Link the necessary frameworks to the target
   target_link_libraries(PlatformWebview INTERFACE "-framework Webkit -framework Carbon -framework Cocoa")
   
