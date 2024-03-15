@@ -51,14 +51,6 @@ namespace deskgui {
       case WM_CREATE: {
         window->pImpl_->monitorScaleFactor_ = computeDpiScale(hwnd);
       } break;
-      case WM_CLOSE: {
-        event::WindowClose closeEvent{};
-        window->emit(closeEvent);
-        if (closeEvent.isCancelled()) {
-          return false;
-        }
-        window->appHandler_->notifyWindowClosedFromUI(window->getName());
-      } break;
       case WM_GETMINMAXINFO: {
         auto *info = reinterpret_cast<MINMAXINFO *>(lParam);
         if (window->maxSize_.first) {
@@ -86,6 +78,7 @@ namespace deskgui {
       } break;
       case WM_DPICHANGED: {
         window->pImpl_->monitorScaleFactor_ = computeDpiScale(hwnd);
+        window->emit<event::WindowResize>(window->getSize());
       }
     }
     return true;
@@ -103,7 +96,20 @@ namespace deskgui {
     }
 
     if (window) {
-      if (!processWindowMessage(window, hwnd, uMsg, wParam, lParam)) return 0;
+      switch (uMsg) {
+        case WM_CLOSE: {
+          event::WindowClose closeEvent{};
+          window->emit(closeEvent);
+          if (closeEvent.isCancelled()) {
+            return 0;
+          }
+          window->appHandler_->notifyWindowClosedFromUI(window->getName());
+          break;
+        }
+        default:
+          if (!processWindowMessage(window, hwnd, uMsg, wParam, lParam)) return 0;
+          break;
+      }
     }
 
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
