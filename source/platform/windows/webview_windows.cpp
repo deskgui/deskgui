@@ -16,7 +16,8 @@
 using namespace deskgui;
 using namespace Microsoft::WRL;
 
-Webview::Webview(const std::string& name, AppHandler* appHandler, void* window, const WebviewOptions& options)
+Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
+                 const WebviewOptions& options)
     : name_(name), appHandler_(appHandler), pImpl_(std::make_unique<Impl>()) {
   if (window == nullptr) {
     throw std::invalid_argument("Window is a nullptr");
@@ -277,8 +278,8 @@ void Webview::loadResources(const Resources& resources) {
 
                   // Create an IStream object from the content
                   wil::com_ptr<IStream> contentStream
-                      = SHCreateMemStream(reinterpret_cast<const BYTE*>(it->data),
-                                          static_cast<UINT>(it->size));
+                      = SHCreateMemStream(reinterpret_cast<const BYTE*>(it->content.data()),
+                                          static_cast<UINT>(it->content.size()));
 
                   wil::com_ptr<ICoreWebView2WebResourceResponse> response;
                   hr = env->CreateWebResourceResponse(contentStream.get(), 200, L"OK",
