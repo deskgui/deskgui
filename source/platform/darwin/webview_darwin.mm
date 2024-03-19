@@ -127,13 +127,14 @@ extern NSString* const kScriptMessageCallback = @"deskgui_callback";
   }
 }
 
-- (void)webView:(WKWebView *)webView stopURLSchemeTask:(id<WKURLSchemeTask>)urlSchemeTask {
-    // Todo
+- (void)webView:(WKWebView*)webView stopURLSchemeTask:(id<WKURLSchemeTask>)urlSchemeTask {
+  // Todo
 }
 
 @end
 
-Webview::Webview(const std::string& name, AppHandler* appHandler, void* window, const WebviewOptions& options)
+Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
+                 const WebviewOptions& options)
     : name_(name), appHandler_(appHandler), pImpl_(std::make_unique<Impl>()) {
   if (window == nullptr) {
     throw std::invalid_argument("Window is a nullptr");
