@@ -63,7 +63,7 @@ using namespace deskgui;
 @end
 
 Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWindow)
-    : name_(name), pImpl_{std::make_unique<Impl>()}, appHandler_(appHandler)     {
+    : name_(name), pImpl_{std::make_unique<Impl>()}, appHandler_(appHandler) {
   if (nativeWindow == nullptr) {
     pImpl_->window = [[NSWindow alloc]
         initWithContentRect:NSMakeRect(kDefaultWindowRect.L, kDefaultWindowRect.T,
@@ -258,4 +258,4 @@ void Window::setMinSize(const ViewSize& size) {
   [pImpl_->window setContentMinSize:NSMakeSize(size.first, size.second)];
 }
 
-float Window::getMonitorScaleFactor() { return 1.f; } // not implemented yed
+float Window::getMonitorScaleFactor() { return 1.f; }  // not implemented yed

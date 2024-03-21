@@ -194,4 +194,4 @@ void Window::setMaxSize(const ViewSize& size) {
   gtk_window_set_geometry_hints(pImpl_->window, nullptr, &hints, h);
 }
 
-float Window::getMonitorScaleFactor() { return 1.f; } // not implemented yed
+float Window::getMonitorScaleFactor() { return 1.f; }  // not implemented yed

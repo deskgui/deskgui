@@ -47,16 +47,16 @@ void Webview::onMessage(const std::string& message) {
     if (doc.HasMember("key") && doc.HasMember("payload")) {
       const auto& key = doc["key"];
       if (key.IsString()) {
-            std::string keyStr = key.GetString();
-            auto callback = callbacks_.find(keyStr);
-            if (callback != callbacks_.end()) {
-                const auto& payload = doc["payload"];
-                rapidjson::StringBuffer buffer;
-                rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-                payload.Accept(writer);
-                callback->second(buffer.GetString());
-            }
+        std::string keyStr = key.GetString();
+        auto callback = callbacks_.find(keyStr);
+        if (callback != callbacks_.end()) {
+          const auto& payload = doc["payload"];
+          rapidjson::StringBuffer buffer;
+          rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+          payload.Accept(writer);
+          callback->second(buffer.GetString());
         }
+      }
     }
   }
   emit(deskgui::event::WebviewOnMessage{message});

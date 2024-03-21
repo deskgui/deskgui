@@ -25,7 +25,7 @@ void App::terminate() {
     return runOnMainThread([=]() { terminate(); });
   }
 
-  if(isRunning_.load()) {
+  if (isRunning_.load()) {
     isRunning_.store(false);
     gtk_main_quit();
   }

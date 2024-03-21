@@ -29,7 +29,7 @@ namespace deskgui {
      * @param period The time period in milliseconds. Function calls will be
      *               throttled if they occur within this time frame.
      */
-    Throttle(size_t period) : period_(period){}
+    Throttle(size_t period) : period_(period) {}
     ~Throttle() = default;
 
     /**

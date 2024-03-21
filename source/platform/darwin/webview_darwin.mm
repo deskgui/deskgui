@@ -277,7 +277,8 @@ void Webview::loadFile(const std::string& path) {
 
 void Webview::loadResources(Resources&& resources) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([&resources, this]() { loadResources(std::move(resources)); });
+    return appHandler_->runOnMainThread(
+        [&resources, this]() { loadResources(std::move(resources)); });
   }
 
   resources_ = std::move(resources);

@@ -29,10 +29,9 @@ int main() {
   options.setOption(WebviewOptions::kRemoteDebuggingPort, 9222);
 
   auto webview = window->createWebview("webview", options);
-  auto hello = std::thread([webview](){
-    webview->loadResources(getCompiledResources("web_resources"));
-    webview->serveResource("index.html");
-  });
+    
+  webview->loadResources(getCompiledResources("web_resources"));
+  webview->serveResource("index.html");
 
   // webview->serveResource("src/lenna.png"); //try loading a png!
 
