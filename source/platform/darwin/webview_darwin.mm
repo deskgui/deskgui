@@ -275,12 +275,13 @@ void Webview::loadFile(const std::string& path) {
   return "";
 }
 
-void Webview::loadResources(const Resources& resources) {
+void Webview::loadResources(Resources&& resources) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([resources, this]() { loadResources(resources); });
+    return appHandler_->runOnMainThread(
+        [&resources, this]() { loadResources(std::move(resources)); });
   }
 
-  resources_ = resources;
+  resources_ = std::move(resources);
 }
 
 void Webview::serveResource(const std::string& resourceUrl) {

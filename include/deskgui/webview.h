@@ -132,7 +132,7 @@ namespace deskgui {
      *
      * @param resources Resources vector object.
      */
-    void loadResources(const Resources& resources);
+    void loadResources(Resources&& resources);
 
     /**
      * @brief Serves a resource identified by its URL scheme.

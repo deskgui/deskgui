@@ -15,7 +15,6 @@
 #include "deskgui/window.h"
 #include "utils/throttle.h"
 
-
 namespace deskgui {
   constexpr size_t kResizeThrottleInMs = 15;
 

@@ -56,7 +56,7 @@ def generate_resource_cpp_content(resource_file_path):
 
     cpp_content += f"Resource mount_{resource_data_name}() {{\n"
     cpp_content += f'    std::vector<unsigned char> resource({resource_data_array_name}.begin(), {resource_data_array_name}.end());\n'
-    cpp_content += f'    return {{"{resource_file_path}", std::move(resource), "{MIME_TYPE_MAP.get(file_extension, "application/octet-stream")}"}};\n'
+    cpp_content += f'    return {{"{resource_file_path}", resource, "{MIME_TYPE_MAP.get(file_extension, "application/octet-stream")}"}};\n'
 
     cpp_content += f"}}\n"
     return cpp_content

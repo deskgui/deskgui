@@ -13,6 +13,8 @@
 using namespace deskgui;
 using namespace deskgui::event;
 
+#include <thread>
+
 int main() {
   App app;
   auto window = app.createWindow("window");
@@ -27,9 +29,10 @@ int main() {
   options.setOption(WebviewOptions::kRemoteDebuggingPort, 9222);
 
   auto webview = window->createWebview("webview", options);
-
+    
   webview->loadResources(getCompiledResources("web_resources"));
   webview->serveResource("index.html");
+
   // webview->serveResource("src/lenna.png"); //try loading a png!
 
   window->connect<WindowResize>(

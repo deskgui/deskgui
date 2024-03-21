@@ -77,9 +77,8 @@ namespace deskgui {
         window->emit<event::WindowResize>(window->getSize());
       } break;
       case WM_GETDPISCALEDSIZE: {
-          window->pImpl_->monitorScaleFactor_ = (float)wParam / USER_DEFAULT_SCREEN_DPI;
+        window->pImpl_->monitorScaleFactor_ = (float)wParam / USER_DEFAULT_SCREEN_DPI;
       } break;
-        
     }
     return true;
   }
