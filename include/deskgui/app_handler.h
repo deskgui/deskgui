@@ -60,7 +60,7 @@ namespace deskgui {
      *
      * @return The count of currently open windows.
      */
-    inline size_t getOpenWindowsCount() const { return openWindows_.load(); };
+    inline size_t getOpenWindowsCount() const { return openedWindows_.load(); }
 
     /**
      * @brief Notifies the `AppHandler` about a window being closed from the user interface.
@@ -74,7 +74,7 @@ namespace deskgui {
     std::thread::id mainThreadId_ = std::this_thread::get_id();
 
     // Number of open windows
-    std::atomic<size_t> openWindows_ = 0;
+    std::atomic<size_t> openedWindows_ = 0;
 
 #ifdef WIN32
     using MainThreadTask = std::function<void()>;  // windows only

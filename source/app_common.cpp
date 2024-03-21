@@ -23,14 +23,14 @@ using namespace deskgui;
 
 Window* App::createWindow(const std::string& name, void* nativeWindow) {
   if (!isMainThread()) {
-    return runOnMainThread([=]() { return createWindow(name); });
+    return runOnMainThread([=]() { return createWindow(name, nativeWindow); });
   }
   std::lock_guard<std::mutex> lock(windowsMutex_);
   try {
     auto result = windows_.emplace(
         name, std::unique_ptr<Window>(new Window(name, getHandler(), nativeWindow)));
     if (result.second) {
-      openWindows_.fetch_add(1);
+      openedWindows_.fetch_add(1);
       auto& window = result.first->second;
       return window.get();
     }
@@ -49,11 +49,11 @@ void App::destroyWindow(const std::string& name) {
 
   auto it = windows_.find(name);
   if (it != windows_.end()) {
-    openWindows_.fetch_sub(1);
+    openedWindows_.fetch_sub(1);
     windows_.erase(it);
   }
 
-  if (openWindows_ == 0) {
+  if (openedWindows_ == 0) {
     // Terminate the application when there are no more windows
     terminate();
   }
@@ -69,4 +69,4 @@ Window* App::getWindow(const std::string& name) const {
   }
 }
 
-void App::notifyWindowClosedFromUI(const std::string& name) { destroyWindow(name); };
+void App::notifyWindowClosedFromUI(const std::string& name) { destroyWindow(name); }

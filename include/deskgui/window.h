@@ -63,7 +63,7 @@ namespace deskgui {
      *
      * @return A constant reference to the name of the window.
      */
-    inline const std::string& getName() const { return name_; };
+    inline const std::string& getName() const { return name_; }
 
     /**
      * Create a new Webview with the specified name and position it with the given rect.

@@ -38,7 +38,7 @@ namespace deskgui {
      *
      * @return True if the application is currently running, false otherwise.
      */
-    [[nodiscard]] inline bool isRunning() const { return isRunning_.load(); };
+    [[nodiscard]] inline bool isRunning() const { return isRunning_.load(); }
 
     /**
      * @brief Terminates the application's main event loop and destroys all windows.
