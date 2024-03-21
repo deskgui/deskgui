@@ -30,6 +30,9 @@ void App::terminate() {
   if (!isMainThread()) {
     return runOnMainThread([=]() { terminate(); });
   }
-  isRunning_.store(false);
-  [NSApp terminate:nil];
+    
+  if(isRunning_.load()) {
+    isRunning_.store(false);
+    [NSApp terminate:nil];
+  }
 }

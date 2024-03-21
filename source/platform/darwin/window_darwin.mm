@@ -63,7 +63,7 @@ using namespace deskgui;
 @end
 
 Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWindow)
-    : name_(name), appHandler_(appHandler), pImpl_{std::make_unique<Impl>()} {
+    : name_(name), pImpl_{std::make_unique<Impl>()}, appHandler_(appHandler)     {
   if (nativeWindow == nullptr) {
     pImpl_->window = [[NSWindow alloc]
         initWithContentRect:NSMakeRect(kDefaultWindowRect.L, kDefaultWindowRect.T,
@@ -78,7 +78,11 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
     [pImpl_->window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
   } else {
     isExternalWindow_ = true;
-    pImpl_->window = static_cast<NSWindow*>(nativeWindow);
+    if ([(__bridge id)nativeWindow isKindOfClass:[NSWindow class]]) {
+      pImpl_->window = static_cast<NSWindow*>(nativeWindow);
+    } else if ([(__bridge id)nativeWindow isKindOfClass:[NSView class]]) {
+      pImpl_->window = [static_cast<NSView*>(nativeWindow) window];
+    }
   }
   if (!pImpl_->window) {
     NSError* error = [NSError errorWithDomain:NSOSStatusErrorDomain code:-1 userInfo:nil];

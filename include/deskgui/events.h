@@ -56,23 +56,23 @@ namespace deskgui {
     };
 
     struct WindowClose : Event {
-      WindowClose() : Event(true){};
+      WindowClose() : Event(true){}
     };
 
     // Webview events
 
     struct WebviewOnMessage : Event {
-      WebviewOnMessage(const std::string& message) : Event(true), message(message) {}
+      WebviewOnMessage(const std::string& msg) : Event(true), message(msg) {}
       const std::string message;
     };
 
     struct WebviewNavigationStarting : Event {
-      WebviewNavigationStarting(const std::string& url) : Event(true), url(url) {}
+      WebviewNavigationStarting(const std::string& urlArg) : Event(true), url(urlArg) {}
       const std::string url;
     };
 
     struct WebviewFrameNavigationStarting : Event {
-      WebviewFrameNavigationStarting(const std::string& url) : Event(true), url(url) {}
+      WebviewFrameNavigationStarting(const std::string& urlArg) : Event(true), url(urlArg) {}
       const std::string url;
     };
 

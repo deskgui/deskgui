@@ -33,7 +33,7 @@ namespace deskgui {
     template <class EventType>
     [[maybe_unused]] UniqueId connect(std::function<void(void)>&& listener) {
       std::unique_lock<std::shared_mutex> lock(mutex_);
-      return connectHelper<EventType>([callback = std::move(listener)](auto event) { callback(); });
+      return connectHelper<EventType>([callback = std::move(listener)]([[maybe_unused]] auto event) { callback(); });
     }
 
     template <class EventType, typename ClassType, typename MemberFunction>
