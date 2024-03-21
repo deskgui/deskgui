@@ -145,12 +145,12 @@ void Webview::loadHTMLString(const std::string& html) {
   webkit_web_view_load_html(pImpl_->webview, html.c_str(), NULL);
 }
 
-void Webview::loadResources(const Resources& resources) {
+void Webview::loadResources(Resources&& resources) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([resources, this]() { loadResources(resources); });
+    return appHandler_->runOnMainThread([&resources, this]() { loadResources(std::move(resources)); });
   }
 
-  resources_ = resources;
+  resources_ = std::move(resources);
 }
 
 void Webview::serveResource(const std::string& resourceUrl) {

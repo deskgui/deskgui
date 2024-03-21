@@ -231,12 +231,12 @@ void Webview::loadHTMLString(const std::string& html) {
   pImpl_->webview_->NavigateToString(s2ws(html).c_str());
 }
 
-void Webview::loadResources(const Resources& resources) {
+void Webview::loadResources(Resources&& resources) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([resources, this] { loadResources(resources); });
+    return appHandler_->runOnMainThread([&resources, this]() { loadResources(std::move(resources)); });
   }
 
-  resources_ = resources;
+  resources_ = std::move(resources);
 
   if (!pImpl_->webResourceRequestedToken_) {
     pImpl_->webResourceRequestedToken_ = EventRegistrationToken();
