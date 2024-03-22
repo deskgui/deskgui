@@ -152,6 +152,18 @@ void Window::center() {
   gtk_window_move(pImpl_->window, x, y);
 }
 
+void Window::setBackgroundColor(int red, int green, int blue) {
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([=]() { setBackgroundColor(red, green, blue); });
+  }
+  GdkColor color;
+  color.red = red * 256;
+  color.green = green * 256;
+  color.blue = blue * 256;
+
+  gtk_widget_modify_bg(GTK_WIDGET(pImpl_->window), GTK_STATE_NORMAL, &color);
+}
+
 [[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->window); }
 
 void Window::setMinSize(const ViewSize& size) {
