@@ -156,14 +156,12 @@ void Window::setBackgroundColor(int red, int green, int blue) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([=]() { setBackgroundColor(red, green, blue); });
   }
-  GdkRGBA color;
-  color.red = red / 255.0;
-  color.green = green / 255.0;
-  color.blue = blue / 255.0;
-  color.alpha = 1.0;
+  GdkColor color;
+  color.red = red * 256;
+  color.green = green * 256;
+  color.blue = blue * 256;
 
-  GtkStyleContext* context = gtk_widget_get_style_context(GTK_WIDGET(pImpl_->window));
-  gtk_style_context_set_background_color(context, &color);
+  gtk_widget_modify_bg(GTK_WIDGET(pImpl_->window), GTK_STATE_NORMAL, &color);
 }
 
 [[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->window); }
