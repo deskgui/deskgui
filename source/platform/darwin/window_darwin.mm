@@ -233,6 +233,18 @@ void Window::center() {
   [pImpl_->window center];
 }
 
+void Window::setBackgroundColor(int red, int green, int blue) {
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([=]() { setBackgroundColor(red, green, blue); });
+  }
+  NSColor* color = [NSColor colorWithCalibratedRed:red / 255.0
+                                             green:green / 255.0
+                                              blue:blue / 255.0
+                                             alpha:1.0];
+  NSView* contentView = [[pImpl_->window] contentView];
+  [contentView setBackgroundColor:color];
+}
+
 [[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->window); }
 
 void Window::setMaxSize(const ViewSize& size) {

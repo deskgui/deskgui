@@ -24,6 +24,7 @@ int main() {
   window->setMinSize({500, 500});
   window->setSize({800, 800});
   window->center();
+  window->setBackgroundColor(249, 203, 103);
 
   WebviewOptions options;
   options.setOption(WebviewOptions::kRemoteDebuggingPort, 9222);
