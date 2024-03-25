@@ -212,9 +212,7 @@ void Window::setBackgroundColor(int red, int green, int blue) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([=]() { setBackgroundColor(red, green, blue); });
   }
-  COLORREF color = RGB(red, green, blue);
-  HBRUSH brush = CreateSolidBrush(color);
-  SetClassLongPtr(pImpl_->window, GCLP_HBRBACKGROUND, (LONG_PTR)brush);
+  pImpl_->backgroundColor_ = RGB(red, green, blue);
   InvalidateRect(pImpl_->window, nullptr, TRUE);
 }
 
