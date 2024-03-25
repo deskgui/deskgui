@@ -36,6 +36,7 @@ namespace deskgui {
 
     Throttle throttle{kResizeThrottleInMs};
     float monitorScaleFactor_ = 1.f;
+    COLORREF backgroundColor_;
   };
 
   inline float computeDpiScale(HWND hwnd) {
@@ -81,6 +82,12 @@ namespace deskgui {
       } break;
       case WM_GETDPISCALEDSIZE: {
         window->pImpl_->monitorScaleFactor_ = (float)wParam / USER_DEFAULT_SCREEN_DPI;
+      } break;
+      case WM_ERASEBKGND: {
+        HDC hdc = reinterpret_cast<HDC>(wParam);
+        RECT rc;
+        GetClientRect(hwnd, &rc);
+        FillRect(hdc, &rc, CreateSolidBrush(window->pImpl_->backgroundColor_));
       } break;
     }
     return true;
