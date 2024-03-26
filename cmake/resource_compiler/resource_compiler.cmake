@@ -64,3 +64,11 @@ macro(resource_compiler)
     set_target_properties(${ARG_PACK_NAME} PROPERTIES CXX_STANDARD 17)
     set_target_properties(${ARG_TARGET_NAME} PROPERTIES CXX_STANDARD 17)
 endmacro()
+
+function(clean_resources TARGET_NAME)
+    set(target_resource_compiler_dir ${resource_compiler_build}/${TARGET_NAME})
+
+    if(EXISTS ${target_resource_compiler_dir}/)
+        file(REMOVE_RECURSE ${target_resource_compiler_dir})
+    endif()
+endfunction()
