@@ -1,3 +1,7 @@
+# deskgui - A powerful and flexible C++ library to create web-based desktop applications.
+# Copyright (c) 2023 deskgui
+# MIT License
+
 import argparse
 import os
 
