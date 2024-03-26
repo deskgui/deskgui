@@ -31,11 +31,12 @@ def generate_binary_array(name, binary_data):
     cpp_content += f"    }};\n\n"
     return cpp_content
 
-def generate_resource_cpp_content(resource_file_path):
+def generate_resource_cpp_content(pack_name: str, resource_file_path: str):
     '''
     Generate the C++ content for a resource file.
 
     Args:
+        pack_name (str): The name of the resource pack.
         resource_file_path (str): The path to the resource file.
 
     Returns:
@@ -54,7 +55,7 @@ def generate_resource_cpp_content(resource_file_path):
     
     cpp_content += generate_binary_array(resource_data_array_name, binary_data)
 
-    cpp_content += f"Resource mount_{resource_data_name}() {{\n"
+    cpp_content += f"Resource mount_{pack_name}_{resource_data_name}() {{\n"
     cpp_content += f'    std::vector<unsigned char> resource({resource_data_array_name}.begin(), {resource_data_array_name}.end());\n'
     cpp_content += f'    return {{"{resource_file_path}", resource, "{MIME_TYPE_MAP.get(file_extension, "application/octet-stream")}"}};\n'
 
@@ -74,7 +75,7 @@ def generate_resource_cpp_file(output_dir, pack_name, resource_file):
         str: The C++ method name of the mounted resource.
 
     '''
-    cpp_content = generate_resource_cpp_content(resource_file)
+    cpp_content = generate_resource_cpp_content(pack_name, resource_file)
 
     resource_file_name, _ = os.path.splitext(os.path.basename(resource_file))
     cpp_file_name = f"{pack_name}_{resource_file_name}.cpp"
@@ -82,4 +83,4 @@ def generate_resource_cpp_file(output_dir, pack_name, resource_file):
 
     with open(cpp_file_path, "w") as cpp_file:
         cpp_file.write(cpp_content)
-    return f'mount_{resource_file_name.replace(".", "_").replace("-", "_")}'
+    return f'mount_{pack_name}_{resource_file_name.replace(".", "_").replace("-", "_")}'
