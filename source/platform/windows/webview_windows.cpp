@@ -18,12 +18,12 @@ using namespace Microsoft::WRL;
 
 Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
                  const WebviewOptions& options)
-    : name_(name), appHandler_(appHandler), pImpl_(std::make_unique<Impl>()) {
+    : pImpl_(std::make_unique<Impl>()), appHandler_(appHandler), name_(name) {
   if (window == nullptr) {
     throw std::invalid_argument("Window is a nullptr");
   }
 
-  if (!pImpl_->createWebviewInstance(static_cast<HWND>(window), options)) {
+  if (!pImpl_->createWebviewInstance(appHandler_->getName(), static_cast<HWND>(window), options)) {
     throw std::exception("Cannot initialize webview");
   }
 

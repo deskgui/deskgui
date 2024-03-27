@@ -22,7 +22,7 @@
 namespace deskgui {
 
   struct Webview::Impl {
-    bool createWebviewInstance(HWND hWnd, const WebviewOptions& options);
+    bool createWebviewInstance(const std::string& appName, HWND hWnd, const WebviewOptions& options);
 
     wil::com_ptr<ICoreWebView2> webview_;
     wil::com_ptr<ICoreWebView2Controller> webviewController_;
@@ -32,7 +32,8 @@ namespace deskgui {
     std::optional<EventRegistrationToken> acceleratorKeysToken_;
   };
 
-  inline bool Webview::Impl::createWebviewInstance(HWND hWnd, const WebviewOptions& options) {
+  inline bool Webview::Impl::createWebviewInstance(const std::string& appName, HWND hWnd,
+                                                   const WebviewOptions& options) {
     using namespace Microsoft::WRL;
 
     ComPtr environmentOptions = Make<CoreWebView2EnvironmentOptions>();
@@ -69,7 +70,7 @@ namespace deskgui {
 
     std::wstring temp;
     wil::GetEnvironmentVariableW(L"TEMP", temp);
-    temp += L"\\deskgui";
+    temp += L"\\" + std::wstring(appName.begin(), appName.end());
 
     std::atomic_flag flag = ATOMIC_FLAG_INIT;
     flag.test_and_set();

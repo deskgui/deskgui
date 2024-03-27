@@ -26,12 +26,22 @@ namespace deskgui {
    * main thread, facilitating safe execution of tasks on the main thread's message loop.
    * Additionally, it manages window synchronization and keeps track of open windows in the
    * application.
+   * 
+   * @param name The name associated with this Application.
+   * 
    */
-
   class AppHandler {
   public:
-    AppHandler() = default;
-    ~AppHandler() = default;
+    explicit AppHandler(const std::string& name) : name_{name} {}
+    virtual ~AppHandler() = default;
+
+    /**
+     * @brief Get the name associated with this Application.
+     *
+     *
+     * @return A constant reference to the name of the app.
+     */
+    inline const std::string& getName() const { return name_; }
 
     /**
      * @brief Checks if the current thread is the main thread.
@@ -70,6 +80,9 @@ namespace deskgui {
     virtual void notifyWindowClosedFromUI(const std::string& name) = 0;
 
   protected:
+    // App name
+    std::string name_;
+
     // ID of the main thread
     std::thread::id mainThreadId_ = std::this_thread::get_id();
 
