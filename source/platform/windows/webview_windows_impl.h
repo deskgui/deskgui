@@ -69,6 +69,7 @@ namespace deskgui {
 
     std::wstring temp;
     wil::GetEnvironmentVariableW(L"TEMP", temp);
+    temp += L"\\deskgui";
 
     std::atomic_flag flag = ATOMIC_FLAG_INIT;
     flag.test_and_set();
