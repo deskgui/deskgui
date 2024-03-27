@@ -16,7 +16,7 @@ using namespace deskgui::event;
 #include <thread>
 
 int main() {
-  App app;
+  App app("EmbeddedResourcesExample");
   auto window = app.createWindow("window");
 
   window->setTitle("Embedded web resources example");

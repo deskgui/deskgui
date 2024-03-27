@@ -18,12 +18,14 @@ namespace deskgui {
   /**
    * @class App
    * @brief The main application class responsible for running the deskgui application.
+   * 
+   * @param name The name of the application. Defaults to "deskgui" if not provided.
    *
    */
   class App : private AppHandler {
   public:
-    App() = default;
-    ~App() = default;
+    explicit App(const std::string& name = "deskgui");
+    ~App() final = default;
 
     /**
      * @brief Starts the main event loop of the application.

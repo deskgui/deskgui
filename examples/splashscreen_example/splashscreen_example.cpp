@@ -11,6 +11,8 @@
 #include <filesystem>
 #include <iostream>
 
+static const std::string kApplicationName = "SplashcreenExample";
+
 static const std::string kLoadingWindowName = "loadingWindow";
 static const std::string kLoadingViewName = "loadingView";
 
@@ -21,7 +23,7 @@ using namespace deskgui;
 using namespace deskgui::event;
 
 int main() {
-  App app;
+  App app(kApplicationName);
 
   // loading window
   auto loadingWindow = app.createWindow(kLoadingWindowName);

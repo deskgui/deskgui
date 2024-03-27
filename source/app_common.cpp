@@ -21,6 +21,8 @@
 
 using namespace deskgui;
 
+App::App(const std::string& name) : AppHandler(name){};
+
 Window* App::createWindow(const std::string& name, void* nativeWindow) {
   if (!isMainThread()) {
     return runOnMainThread([=]() { return createWindow(name, nativeWindow); });

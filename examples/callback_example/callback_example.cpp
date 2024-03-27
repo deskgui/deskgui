@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <iostream>
 
+static const std::string kApplicationName = "CallbackExample";
 static const std::string kWindowName = "window";
 static const std::string kWebviewName = "webview";
 
@@ -20,7 +21,7 @@ struct MessageDeserialization {
 };
 
 int main() {
-  deskgui::App app;
+  deskgui::App app(kApplicationName);
 
   auto window = app.createWindow(kWindowName);
   window->setTitle("My awesome webview!");

@@ -13,7 +13,7 @@
 using namespace deskgui;
 
 Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWindow)
-    : pImpl_{std::make_unique<Impl>()}, name_(name), appHandler_(appHandler) {
+    : name_(name), pImpl_{std::make_unique<Impl>()}, appHandler_(appHandler) {
   SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
 
   if (nativeWindow == nullptr) {
