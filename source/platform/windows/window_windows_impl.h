@@ -151,19 +151,21 @@ namespace deskgui {
     }
   }
 
-  inline const std::wstring s2ws(const std::string &str) {
-    std::wstring wstr;
-    size_t size;
-    wstr.resize(str.length());
-    mbstowcs_s(&size, &wstr[0], wstr.size() + 1, str.c_str(), str.size());
+  inline std::wstring s2ws(const std::string &str) {
+    int size_needed
+        = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), static_cast<int>(str.length()), nullptr, 0);
+    std::wstring wstr(size_needed, 0);
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), static_cast<int>(str.length()), &wstr[0],
+                        size_needed);
     return wstr;
   }
 
-  inline const std::string ws2s(const std::wstring &wstr) {
-    std::string str;
-    size_t size;
-    str.resize(wstr.length());
-    wcstombs_s(&size, &str[0], str.size() + 1, wstr.c_str(), wstr.size());
+  inline std::string ws2s(const std::wstring &wstr) {
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.length()),
+                                          nullptr, 0, nullptr, nullptr);
+    std::string str(size_needed, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.length()), &str[0],
+                        size_needed, nullptr, nullptr);
     return str;
   }
 }  // namespace deskgui
