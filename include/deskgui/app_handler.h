@@ -7,14 +7,14 @@
 
 #pragma once
 
-#ifdef WIN32
-#  include "queue.h"
-#endif
-
 #include <atomic>
 #include <functional>
 #include <iostream>
 #include <thread>
+
+#ifdef WIN32
+    #include <Windows.h>
+#endif
 
 namespace deskgui {
   /**
@@ -32,7 +32,7 @@ namespace deskgui {
    */
   class AppHandler {
   public:
-    explicit AppHandler(const std::string& name) : name_{name} {}
+    explicit AppHandler(const std::string& name);
     virtual ~AppHandler() = default;
 
     /**
@@ -90,9 +90,9 @@ namespace deskgui {
     std::atomic<size_t> openedWindows_ = 0;
 
 #ifdef WIN32
-    using MainThreadTask = std::function<void()>;  // windows only
-    Queue<MainThreadTask> queue;                   // windows only
-    void* eventHandle_ = nullptr;                  // windows only
+    HWND messageOnlyWindow_ = nullptr;
 #endif
   };
+
+
 }  // namespace deskgui
