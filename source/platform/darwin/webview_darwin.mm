@@ -265,7 +265,7 @@ void Webview::loadFile(const std::string& path) {
 
 [[nodiscard]] const std::string Webview::getUrl() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=]() { return getUrl(); });
+    return appHandler_->runOnMainThread([this]() { return getUrl(); });
   }
   // Get the current URL of the WKWebView
   NSURL* currentURL = pImpl_->webview.URL;
@@ -293,7 +293,7 @@ void Webview::serveResource(const std::string& resourceUrl) {
 
 void Webview::clearResources() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { clearResources(); });
+    return appHandler_->runOnMainThread([this] { clearResources(); });
   }
   resources_.clear();
 }

@@ -17,27 +17,22 @@ void App::run() {
   isRunning_.store(true);
 
   mainThreadId_ = std::this_thread::get_id();
-  eventHandle_ = CreateEvent(NULL, FALSE, FALSE, NULL);
 
   MSG msg = {};
   while (isRunning_.load()) {
-    MsgWaitForMultipleObjects(1, &eventHandle_, FALSE, INFINITE, QS_ALLINPUT);
+    WaitMessage();
 
+    // Process messages
     while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
       TranslateMessage(&msg);
       DispatchMessage(&msg);
-    }
-
-    MainThreadTask task;
-    while (queue.pop(task)) {
-      task();
     }
   }
 }
 
 void App::terminate() {
   if (!isMainThread()) {
-    return runOnMainThread([=]() { terminate(); });
+    return runOnMainThread([this]() { terminate(); });
   }
   isRunning_.store(false);
 }

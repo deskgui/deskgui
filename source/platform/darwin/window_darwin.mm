@@ -114,7 +114,7 @@ void Window::setTitle(const std::string& title) {
 
 [[nodiscard]] std::string Window::getTitle() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return getTitle(); });
+    return appHandler_->runOnMainThread([this] { return getTitle(); });
   }
   NSString* nativeTitle = [pImpl_->window title];
   const char* utf8String = [nativeTitle UTF8String];
@@ -134,7 +134,7 @@ void Window::setSize(const ViewSize& size) {
 
 [[nodiscard]] ViewSize Window::getSize() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return getSize(); });
+    return appHandler_->runOnMainThread([this] { return getSize(); });
   }
   NSRect frame = pImpl_->window.contentView.frame;
   return {frame.size.width, frame.size.height};
@@ -154,7 +154,7 @@ void Window::setPosition(const ViewRect& position) {
 
 [[nodiscard]] ViewRect Window::getPosition() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return getPosition(); });
+    return appHandler_->runOnMainThread([this] { return getPosition(); });
   }
   NSRect frame = pImpl_->window.frame;
   ViewRect position;
@@ -178,7 +178,7 @@ void Window::setResizable(bool state) {
 
 [[nodiscard]] bool Window::isResizable() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return isResizable(); });
+    return appHandler_->runOnMainThread([this] { return isResizable(); });
   }
 
   NSUInteger styleMask = pImpl_->window.styleMask;
@@ -187,7 +187,7 @@ void Window::setResizable(bool state) {
 
 void Window::setDecorations(bool decorations) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return setDecorations(decorations); });
+    return appHandler_->runOnMainThread([decorations, this] { return setDecorations(decorations); });
   }
 
   NSWindowStyleMask styleMask = [pImpl_->window styleMask];
@@ -205,7 +205,7 @@ void Window::setDecorations(bool decorations) {
 
 [[nodiscard]] bool Window::isDecorated() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return isDecorated(); });
+    return appHandler_->runOnMainThread([this] { return isDecorated(); });
   }
   NSWindowStyleMask styleMask = [pImpl_->window styleMask];
   return styleMask != NSWindowStyleMaskBorderless;
@@ -213,14 +213,14 @@ void Window::setDecorations(bool decorations) {
 
 void Window::hide() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { hide(); });
+    return appHandler_->runOnMainThread([this] { hide(); });
   }
   [pImpl_->window orderOut:nil];
 }
 
 void Window::show() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { show(); });
+    return appHandler_->runOnMainThread([this] { show(); });
   }
   [pImpl_->window makeKeyAndOrderFront:nil];
   [NSApp activateIgnoringOtherApps:YES];
@@ -228,14 +228,14 @@ void Window::show() {
 
 void Window::center() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=]() { center(); });
+    return appHandler_->runOnMainThread([this]() { center(); });
   }
   [pImpl_->window center];
 }
 
 void Window::setBackgroundColor(int red, int green, int blue) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=]() { setBackgroundColor(red, green, blue); });
+    return appHandler_->runOnMainThread([this, red, green, blue]() { setBackgroundColor(red, green, blue); });
   }
   NSColor* color = [NSColor colorWithCalibratedRed:red / 255.0
                                              green:green / 255.0
