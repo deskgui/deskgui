@@ -114,7 +114,7 @@ Webview::~Webview() {}
 
 void Webview::enableDevTools(bool state) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { enableDevTools(state); });
+    return appHandler_->runOnMainThread([this, state] { enableDevTools(state); });
   }
 
   wil::com_ptr<ICoreWebView2Settings> settings;
@@ -125,7 +125,7 @@ void Webview::enableDevTools(bool state) {
 
 void Webview::enableContextMenu(bool state) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { enableContextMenu(state); });
+    return appHandler_->runOnMainThread([this, state] { enableContextMenu(state); });
   }
 
   wil::com_ptr<ICoreWebView2Settings> settings;
@@ -136,7 +136,7 @@ void Webview::enableContextMenu(bool state) {
 
 void Webview::enableZoom(bool state) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { enableZoom(state); });
+    return appHandler_->runOnMainThread([this, state] { enableZoom(state); });
   }
 
   wil::com_ptr<ICoreWebView2Settings> settings;
@@ -147,7 +147,7 @@ void Webview::enableZoom(bool state) {
 
 void Webview::enableAcceleratorKeys(bool state) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { enableAcceleratorKeys(state); });
+    return appHandler_->runOnMainThread([this, state] { enableAcceleratorKeys(state); });
   }
 
   if (state) {
@@ -189,7 +189,7 @@ void Webview::resize(const ViewSize& size) {
 
 void Webview::setPosition(const ViewRect& rect) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { setPosition(rect); });
+    return appHandler_->runOnMainThread([this, rect] { setPosition(rect); });
   }
   if (pImpl_->webviewController_) {
     pImpl_->webviewController_->put_Bounds(
@@ -200,7 +200,7 @@ void Webview::setPosition(const ViewRect& rect) {
 
 void Webview::show(bool state) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { show(state); });
+    return appHandler_->runOnMainThread([this, state] { show(state); });
   }
   if (pImpl_->webviewController_) {
     pImpl_->webviewController_->put_IsVisible(static_cast<BOOL>(state));
@@ -209,7 +209,7 @@ void Webview::show(bool state) {
 
 void Webview::navigate(const std::string& url) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { navigate(url); });
+    return appHandler_->runOnMainThread([this, url] { navigate(url); });
   }
 
   pImpl_->webview_->Navigate(s2ws(url).c_str());
@@ -217,7 +217,7 @@ void Webview::navigate(const std::string& url) {
 
 void Webview::loadFile(const std::string& path) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { loadFile(path); });
+    return appHandler_->runOnMainThread([this, path] { loadFile(path); });
   }
   std::string filePath = "file://" + path;
   pImpl_->webview_->Navigate(s2ws(filePath).c_str());
@@ -225,7 +225,7 @@ void Webview::loadFile(const std::string& path) {
 
 void Webview::loadHTMLString(const std::string& html) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { loadHTMLString(html); });
+    return appHandler_->runOnMainThread([this, html] { loadHTMLString(html); });
   }
 
   pImpl_->webview_->NavigateToString(s2ws(html).c_str());
@@ -303,14 +303,14 @@ void Webview::loadResources(Resources&& resources) {
 
 void Webview::serveResource(const std::string& resourceScheme) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { serveResource(resourceScheme); });
+    return appHandler_->runOnMainThread([this, resourceScheme] { serveResource(resourceScheme); });
   }
   navigate(pImpl_->rootScheme_ + resourceScheme);
 }
 
 void Webview::clearResources() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { clearResources(); });
+    return appHandler_->runOnMainThread([this] { clearResources(); });
   }
 
   resources_.clear();
@@ -325,7 +325,7 @@ void Webview::clearResources() {
 
 [[nodiscard]] const std::string Webview::getUrl() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return getUrl(); });
+    return appHandler_->runOnMainThread([this] { return getUrl(); });
   }
 
   wil::unique_cotaskmem_string url;
@@ -335,7 +335,7 @@ void Webview::clearResources() {
 
 void Webview::injectScript(const std::string& script) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { injectScript(script); });
+    return appHandler_->runOnMainThread([this, script] { injectScript(script); });
   }
 
   pImpl_->webview_->AddScriptToExecuteOnDocumentCreated(s2ws(script).c_str(), nullptr);
@@ -343,7 +343,7 @@ void Webview::injectScript(const std::string& script) {
 
 void Webview::executeScript(const std::string& script) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { executeScript(script); });
+    return appHandler_->runOnMainThread([this, script] { executeScript(script); });
   }
   pImpl_->webview_->ExecuteScript(s2ws(script).c_str(), nullptr);
 }

@@ -29,10 +29,10 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
                                     kDefaultWindowRect.R - kDefaultWindowRect.L,
                                     kDefaultWindowRect.B - kDefaultWindowRect.T,
 
-                                    nullptr,            // Parent window
-                                    nullptr,            // Menu
-                                    pImpl_->hInstance,  // Instance handle
-                                    this                // Additional application data
+                                    nullptr,                  // Parent window
+                                    nullptr,                  // Menu
+                                    Window::Impl::hInstance,  // Instance handle
+                                    this                      // Additional application data
     );
 
     if (!pImpl_->window) {
@@ -54,14 +54,14 @@ Window::~Window() {
 
 void Window::setTitle(const std::string& title) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { setTitle(title); });
+    return appHandler_->runOnMainThread([this, title] { setTitle(title); });
   }
   SetWindowText(pImpl_->window, s2ws(title).c_str());
 }
 
 [[nodiscard]] std::string Window::getTitle() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return getTitle(); });
+    return appHandler_->runOnMainThread([this] { return getTitle(); });
   }
   const int bufferSize = 256;
   WCHAR buffer[bufferSize];
@@ -72,7 +72,7 @@ void Window::setTitle(const std::string& title) {
 
 void Window::setSize(const ViewSize& size) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { setSize(size); });
+    return appHandler_->runOnMainThread([this, size] { setSize(size); });
   }
   RECT windowRect
       = {0, 0, size.first * pImpl_->monitorScaleFactor_, size.second * pImpl_->monitorScaleFactor_};
@@ -86,7 +86,7 @@ void Window::setSize(const ViewSize& size) {
 
 [[nodiscard]] ViewSize Window::getSize() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return getSize(); });
+    return appHandler_->runOnMainThread([this] { return getSize(); });
   }
 
   RECT rect;
@@ -96,7 +96,7 @@ void Window::setSize(const ViewSize& size) {
 
 void Window::setPosition(const ViewRect& position) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { setPosition(position); });
+    return appHandler_->runOnMainThread([this, position] { setPosition(position); });
   }
   RECT r;
   r.left = position.L * pImpl_->monitorScaleFactor_;
@@ -109,7 +109,7 @@ void Window::setPosition(const ViewRect& position) {
 
 [[nodiscard]] ViewRect Window::getPosition() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return getPosition(); });
+    return appHandler_->runOnMainThread([this] { return getPosition(); });
   }
   RECT windowRect;
   GetWindowRect(pImpl_->window, &windowRect);
@@ -119,7 +119,7 @@ void Window::setPosition(const ViewRect& position) {
 
 void Window::setResizable(bool resizable) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { setResizable(resizable); });
+    return appHandler_->runOnMainThread([this, resizable] { setResizable(resizable); });
   }
 
   auto currentStyle = GetWindowLong(pImpl_->window, GWL_STYLE);
@@ -133,7 +133,7 @@ void Window::setResizable(bool resizable) {
 
 [[nodiscard]] bool Window::isResizable() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return isResizable(); });
+    return appHandler_->runOnMainThread([this] { return isResizable(); });
   }
 
   auto currentStyle = GetWindowLong(pImpl_->window, GWL_STYLE);
@@ -142,7 +142,7 @@ void Window::setResizable(bool resizable) {
 
 void Window::setDecorations(bool decorations) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { setDecorations(decorations); });
+    return appHandler_->runOnMainThread([this, decorations] { setDecorations(decorations); });
   }
 
   LONG style = GetWindowLong(pImpl_->window, GWL_STYLE);
@@ -156,7 +156,7 @@ void Window::setDecorations(bool decorations) {
 
 [[nodiscard]] bool Window::isDecorated() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return isDecorated(); });
+    return appHandler_->runOnMainThread([this] { return isDecorated(); });
   }
   LONG style = GetWindowLong(pImpl_->window, GWL_STYLE);
   return (style & WS_OVERLAPPEDWINDOW) != 0;
@@ -164,21 +164,21 @@ void Window::setDecorations(bool decorations) {
 
 void Window::hide() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=]() { hide(); });
+    return appHandler_->runOnMainThread([this]() { hide(); });
   }
   ShowWindow(pImpl_->window, SW_HIDE);
 }
 
 void Window::show() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=]() { show(); });
+    return appHandler_->runOnMainThread([this]() { show(); });
   }
   ShowWindow(pImpl_->window, SW_SHOW);
 }
 
 void Window::center() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=]() { center(); });
+    return appHandler_->runOnMainThread([this]() { center(); });
   }
   RECT windowRect;
   GetWindowRect(pImpl_->window, &windowRect);
@@ -210,7 +210,7 @@ void Window::center() {
 
 void Window::setBackgroundColor(int red, int green, int blue) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=]() { setBackgroundColor(red, green, blue); });
+    return appHandler_->runOnMainThread([this, red, green, blue]() { setBackgroundColor(red, green, blue); });
   }
   pImpl_->backgroundColor_ = RGB(red, green, blue);
   InvalidateRect(pImpl_->window, nullptr, TRUE);
@@ -220,7 +220,7 @@ void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->window); }
 
 void Window::setMaxSize(const ViewSize& size) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=]() { setMaxSize(size); });
+    return appHandler_->runOnMainThread([this, size]() { setMaxSize(size); });
   }
   maxSize_ = {size.first * pImpl_->monitorScaleFactor_, size.second * pImpl_->monitorScaleFactor_};
 
@@ -230,6 +230,9 @@ void Window::setMaxSize(const ViewSize& size) {
 }
 
 void Window::setMinSize(const ViewSize& size) {
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([this, size]() { setMinSize(size); });
+  }
   minSize_ = {size.first * pImpl_->monitorScaleFactor_, size.second * pImpl_->monitorScaleFactor_};
 }
 

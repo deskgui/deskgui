@@ -76,7 +76,7 @@ Webview::~Webview() {
 
 void Webview::enableDevTools(bool state) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { enableDevTools(state); });
+    return appHandler_->runOnMainThread([state, this] { enableDevTools(state); });
   }
   WebKitSettings* settings = webkit_web_view_get_settings(pImpl_->webview);
   webkit_settings_set_enable_developer_extras(settings, state);
@@ -88,7 +88,7 @@ void Webview::enableContextMenu([[maybe_unused]] bool state) {
 
 void Webview::enableZoom(bool state) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { enableZoom(state); });
+    return appHandler_->runOnMainThread([state, this] { enableZoom(state); });
   }
   WebKitSettings* settings = webkit_web_view_get_settings(pImpl_->webview);
   webkit_settings_set_zoom_text_only(settings, state);
@@ -114,7 +114,7 @@ void Webview::setPosition(const ViewRect& rect) {
 
 void Webview::show(bool state) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { show(state); });
+    return appHandler_->runOnMainThread([state, this] { show(state); });
   }
   if (state) {
     gtk_widget_show_all(GTK_WIDGET(pImpl_->webview));
@@ -163,14 +163,14 @@ void Webview::serveResource(const std::string& resourceUrl) {
 
 void Webview::clearResources() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { clearResources(); });
+    return appHandler_->runOnMainThread([this] { clearResources(); });
   }
   resources_.clear();
 }
 
 [[nodiscard]] const std::string Webview::getUrl() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return getUrl(); });
+    return appHandler_->runOnMainThread([this] { return getUrl(); });
   }
   const gchar* uri = webkit_web_view_get_uri(pImpl_->webview);
   return std::string(uri ? uri : "");

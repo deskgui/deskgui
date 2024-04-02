@@ -123,6 +123,12 @@ namespace deskgui {
     if (auto settings3 = settings.try_query<ICoreWebView2Settings3>(); settings3) {
       settings3->put_AreBrowserAcceleratorKeysEnabled(false);
     }
+
+    if (auto settings4 = settings.try_query<ICoreWebView2Settings4>(); settings4) {
+      settings4->put_IsGeneralAutofillEnabled(false);
+      settings4->put_IsPasswordAutosaveEnabled(false);
+    }
+
     return true;
   }
 

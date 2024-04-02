@@ -53,7 +53,7 @@ void Window::setTitle(const std::string& title) {
 
 [[nodiscard]] std::string Window::getTitle() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return getTitle(); });
+    return appHandler_->runOnMainThread([this] { return getTitle(); });
   }
 
   return std::string(gtk_window_get_title(pImpl_->window));
@@ -68,7 +68,7 @@ void Window::setSize(const ViewSize& size) {
 
 [[nodiscard]] ViewSize Window::getSize() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return getSize(); });
+    return appHandler_->runOnMainThread([this] { return getSize(); });
   }
   gint width, height;
   gtk_window_get_size(pImpl_->window, &width, &height);
@@ -87,7 +87,7 @@ void Window::setPosition(const ViewRect& position) {
 
 [[nodiscard]] ViewRect Window::getPosition() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return getPosition(); });
+    return appHandler_->runOnMainThread([this] { return getPosition(); });
   }
   gint L, T, W, H;
   gtk_window_get_position(pImpl_->window, &L, &T);
@@ -105,7 +105,7 @@ void Window::setResizable(bool state) {
 
 [[nodiscard]] bool Window::isResizable() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return isResizable(); });
+    return appHandler_->runOnMainThread([this] { return isResizable(); });
   }
 
   return gtk_window_get_resizable(pImpl_->window) != FALSE;
@@ -113,35 +113,35 @@ void Window::setResizable(bool state) {
 
 void Window::setDecorations(bool decorations) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { setDecorations(decorations); });
+    return appHandler_->runOnMainThread([decorations, this] { setDecorations(decorations); });
   }
   gtk_window_set_decorated(GTK_WINDOW(pImpl_->window), decorations);
 }
 
 [[nodiscard]] bool Window::isDecorated() const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { return isDecorated(); });
+    return appHandler_->runOnMainThread([this] { return isDecorated(); });
   }
   return gtk_window_get_decorated(GTK_WINDOW(pImpl_->window));
 }
 
 void Window::hide() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { hide(); });
+    return appHandler_->runOnMainThread([this] { hide(); });
   }
   gtk_widget_hide(GTK_WIDGET(pImpl_->window));
 }
 
 void Window::show() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=] { show(); });
+    return appHandler_->runOnMainThread([this] { show(); });
   }
   gtk_widget_show_all(GTK_WIDGET(pImpl_->window));
 }
 
 void Window::center() {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=]() { center(); });
+    return appHandler_->runOnMainThread([this]() { center(); });
   }
   int windowWidth, windowHeight;
   gtk_window_get_size(pImpl_->window, &windowWidth, &windowHeight);
@@ -154,7 +154,7 @@ void Window::center() {
 
 void Window::setBackgroundColor(int red, int green, int blue) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([=]() { setBackgroundColor(red, green, blue); });
+    return appHandler_->runOnMainThread([this, red, green, blue]() { setBackgroundColor(red, green, blue); });
   }
   GdkColor color;
   color.red = red * 256;

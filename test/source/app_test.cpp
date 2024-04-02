@@ -1,4 +1,5 @@
 #define DOCTEST_WEBVIEW_TEST
+#define NOMINMAX
 
 #include <deskgui/app.h>
 

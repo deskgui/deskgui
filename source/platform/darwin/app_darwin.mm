@@ -28,7 +28,7 @@ void App::run() {
 
 void App::terminate() {
   if (!isMainThread()) {
-    return runOnMainThread([=]() { terminate(); });
+    return runOnMainThread([this]() { terminate(); });
   }
 
   if (isRunning_.load()) {
