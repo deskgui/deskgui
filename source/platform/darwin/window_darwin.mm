@@ -50,11 +50,11 @@ using namespace deskgui;
 }
 
 - (void)windowDidResize:(NSNotification*)notification {
-  _throttle->trigger([=]() { _window->emit(event::WindowResize{_window->getSize()}); });
+  _throttle->trigger([=]() { _window->emit(event::WindowResize{_window->getSize(PixelsType::kPhysical)}); });
 }
 
 - (void)windowDidEndLiveResize:(NSNotification*)notification {
-  _window->emit(event::WindowResize{_window->getSize()});
+  _window->emit(event::WindowResize{_window->getSize(PixelsType::kPhysical)});
 }
 
 - (BOOL)windowShouldZoom:(NSWindow*)window toFrame:(NSRect)newFrame {
@@ -106,7 +106,7 @@ Window::~Window() {
 
 void Window::setTitle(const std::string& title) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([title, this] { return setTitle(title); });
+    return appHandler_->runOnMainThread([title, this] { setTitle(title); });
   }
   NSString* nativeTitle = [NSString stringWithUTF8String:title.c_str()];
   [pImpl_->window setTitle:nativeTitle];
@@ -122,39 +122,116 @@ void Window::setTitle(const std::string& title) {
   return title;
 }
 
-void Window::setSize(const ViewSize& size) {
+void Window::setSize(const ViewSize& size, PixelsType type) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([size, this] { return setSize(size); });
+    return appHandler_->runOnMainThread([size, type, this] { setSize(size, type); });
   }
+  auto newSize = size;
+  if (type == PixelsType::kLogical) {
+    newSize = ViewSize{size.first * monitorScaleFactor_, size.second * monitorScaleFactor_};
+  }
+
   NSRect frame = pImpl_->window.frame;
-  frame.size.width = size.first;
-  frame.size.height = size.second;
+  frame.size.width = newSize.first;
+  frame.size.height = newSize.second;
   [pImpl_->window setFrame:frame display:YES];
 }
 
-[[nodiscard]] ViewSize Window::getSize() const {
+[[nodiscard]] ViewSize Window::getSize(PixelsType type) const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([this] { return getSize(); });
+    return appHandler_->runOnMainThread([type, this] { return getSize(type); });
   }
   NSRect frame = pImpl_->window.contentView.frame;
-  return {frame.size.width, frame.size.height};
+  auto size = ViewSize{frame.size.width, frame.size.height};
+  if (type == PixelsType::kLogical) {
+    size.first /= monitorScaleFactor_;
+    size.second /= monitorScaleFactor_;
+  }
+  return size;
 }
 
-void Window::setPosition(const ViewRect& position) {
+void Window::setMaxSize(const ViewSize& size, PixelsType type) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([position, this] { setPosition(position); });
+    return appHandler_->runOnMainThread([size, type, this] { setMinSize(size, type); });
+  }
+  ViewSize adjustedSize = size;
+  if (type == PixelsType::kLogical) {
+    adjustedSize.first *= monitorScaleFactor_;
+    adjustedSize.second *= monitorScaleFactor_;
+  }
+
+  maxSize_ = adjustedSize;
+  maxSizeDefined_ = true;
+
+  [pImpl_->window setContentMaxSize:NSMakeSize(size.first, size.second)];
+
+  NSButton* button = [pImpl_->window standardWindowButton:NSWindowZoomButton];
+  [button setHidden:YES];
+  button.alphaValue = 0.0;
+  [button setEnabled:NO];
+  button.image = nil;
+  button.alternateImage = nil;
+}
+
+[[nodiscard]] ViewSize Window::getMaxSize(PixelsType type) const {
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([type, this]() { return getMaxSize(type); });
+  }
+  if (type == PixelsType::kLogical) {
+    return ViewSize{maxSize_.first / monitorScaleFactor_, maxSize_.second / monitorScaleFactor_};
+  } else {
+    return maxSize_;
+  }
+}
+
+void Window::setMinSize(const ViewSize& size, PixelsType type) {
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([size, type, this] { setMaxSize(size, type); });
+  }
+  ViewSize adjustedSize = size;
+  if (type == PixelsType::kLogical) {
+    adjustedSize.first *= monitorScaleFactor_;
+    adjustedSize.second *= monitorScaleFactor_;
+  }
+
+  minSize_ = adjustedSize;
+  [pImpl_->window setContentMinSize:NSMakeSize(size.first, size.second)];
+}
+
+[[nodiscard]] ViewSize Window::getMinSize(PixelsType type) const {
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([this, type]() { return getMinSize(type); });
+  }
+  if (type == PixelsType::kLogical) {
+    return ViewSize{minSize_.first / monitorScaleFactor_, minSize_.second / monitorScaleFactor_};
+  } else {
+    return minSize_;
+  }
+}
+
+void Window::setPosition(const ViewRect& position, PixelsType type) {
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([position, type, this] { setPosition(position, type); });
   }
   NSRect frame;
   frame.origin.x = position.L;
   frame.origin.y = position.T;
   frame.size.width = position.R - position.L;
   frame.size.height = position.B - position.T;
+
+  if (type == PixelsType::kLogical) {
+    frame.origin.x *= monitorScaleFactor_;
+    frame.origin.y *= monitorScaleFactor_;
+    frame.size.width *= monitorScaleFactor_;
+    frame.size.height *= monitorScaleFactor_;
+  }
+
   [pImpl_->window setFrame:frame display:YES];
 }
 
-[[nodiscard]] ViewRect Window::getPosition() const {
+[[nodiscard]] ViewRect Window::getPosition(PixelsType type) const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([this] { return getPosition(); });
+    return appHandler_->runOnMainThread([type, this] { return getPosition(type); });
   }
   NSRect frame = pImpl_->window.frame;
   ViewRect position;
@@ -162,6 +239,14 @@ void Window::setPosition(const ViewRect& position) {
   position.T = frame.origin.y;
   position.R = frame.origin.x + frame.size.width;
   position.B = frame.origin.y + frame.size.height;
+
+  if (type == PixelsType::kLogical) {
+    position.L /= monitorScaleFactor_;
+    position.T /= monitorScaleFactor_;
+    position.R /= monitorScaleFactor_;
+    position.B /= monitorScaleFactor_;
+  }
+
   return position;
 }
 
@@ -245,28 +330,3 @@ void Window::setBackgroundColor(int red, int green, int blue) {
 }
 
 [[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->window); }
-
-void Window::setMaxSize(const ViewSize& size) {
-  if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([size, this] { setMinSize(size); });
-  }
-  maxSize_ = size;
-  [pImpl_->window setContentMaxSize:NSMakeSize(size.first, size.second)];
-
-  NSButton* button = [pImpl_->window standardWindowButton:NSWindowZoomButton];
-  [button setHidden:YES];
-  button.alphaValue = 0.0;
-  [button setEnabled:NO];
-  button.image = nil;
-  button.alternateImage = nil;
-}
-
-void Window::setMinSize(const ViewSize& size) {
-  if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([size, this] { setMaxSize(size); });
-  }
-  minSize_ = size;
-  [pImpl_->window setContentMinSize:NSMakeSize(size.first, size.second)];
-}
-
-float Window::getMonitorScaleFactor() { return 1.f; }  // not implemented yed
