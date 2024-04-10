@@ -22,7 +22,7 @@ namespace deskgui {
 
   struct Window::Impl {
     WNDCLASS wc = {};
-    HWND window;
+    HWND windowHandle;
     static inline HINSTANCE hInstance;
 
     static bool processWindowMessage(Window *window, HWND hwnd, UINT uMsg, WPARAM wParam,
@@ -33,15 +33,15 @@ namespace deskgui {
                                          DWORD_PTR dwRefData);
 
     void registerWindowClass();
+    float computeDpiScale(HWND hwnd);
 
     Throttle throttle{kResizeThrottleInMs};
-    float monitorScaleFactor_ = 1.f;
     COLORREF backgroundColor_;
   };
 
-  inline float computeDpiScale(HWND hwnd) {
-    float dpi = GetDpiForWindow(hwnd);
-    return dpi / USER_DEFAULT_SCREEN_DPI;
+  inline float Window::Impl::computeDpiScale(HWND hwnd) {
+      float dpi = GetDpiForWindow(hwnd);
+      return dpi / USER_DEFAULT_SCREEN_DPI;
   }
 
   // Process a common window message for the Window class. Return false to stop propagation of the
@@ -49,48 +49,39 @@ namespace deskgui {
   inline bool Window::Impl::processWindowMessage(Window *window, HWND hwnd, UINT uMsg,
                                                  WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
-      case WM_CREATE: {
-        window->pImpl_->monitorScaleFactor_ = computeDpiScale(hwnd);
-      } break;
-      case WM_GETMINMAXINFO: {
-        auto *info = reinterpret_cast<MINMAXINFO *>(lParam);
-        if (window->maxSize_.first) {
-          info->ptMaxTrackSize.x = static_cast<int>(window->maxSize_.first);
-        }
-        if (window->maxSize_.second) {
-          info->ptMaxTrackSize.y = static_cast<int>(window->maxSize_.second);
-        }
-        if (window->minSize_.first) {
-          info->ptMinTrackSize.x = static_cast<int>(window->minSize_.first);
-        }
-        if (window->minSize_.second) {
-          info->ptMinTrackSize.y = static_cast<int>(window->minSize_.second);
-        }
-      } break;
       case WM_SHOWWINDOW: {
         window->emit<event::WindowShow>(static_cast<bool>(wParam));
       } break;
-      case WM_SIZE: {
-        window->pImpl_->throttle.trigger(
-            [window]() { window->emit<event::WindowResize>(window->getSize()); });
+      case WM_GETMINMAXINFO: {
+        auto *info = reinterpret_cast<MINMAXINFO *>(lParam);
+        auto maxSize = window->getMaxSize(PixelsType::kPhysical);
+        auto minSize = window->getMinSize(PixelsType::kPhysical); 
+
+        if (maxSize.first) info->ptMaxTrackSize.x = maxSize.first;
+        if (maxSize.second) info->ptMaxTrackSize.y = maxSize.second;
+        if (minSize.first) info->ptMinTrackSize.x = minSize.first;
+        if (minSize.second) info->ptMinTrackSize.y = minSize.second;
+        return true;
       } break;
       case WM_EXITSIZEMOVE: {
-        window->emit<event::WindowResize>(window->getSize());
+        window->emit<event::WindowResize>(window->getSize(PixelsType::kPhysical));
+      } break;
+      case WM_SIZE: {
+        window->pImpl_->throttle.trigger(
+            [window]() { window->emit<event::WindowResize>(window->getSize(PixelsType::kPhysical)); });
       } break;
       case WM_DPICHANGED: {
-        window->emit<event::WindowResize>(window->getSize());
-      } break;
-      case WM_GETDPISCALEDSIZE: {
-        window->pImpl_->monitorScaleFactor_ = (float)wParam / USER_DEFAULT_SCREEN_DPI;
+        window->setMonitorScaleFactor(window->pImpl_->computeDpiScale(hwnd));
       } break;
       case WM_ERASEBKGND: {
         HDC hdc = reinterpret_cast<HDC>(wParam);
         RECT rc;
         GetClientRect(hwnd, &rc);
         FillRect(hdc, &rc, CreateSolidBrush(window->pImpl_->backgroundColor_));
+        return true;
       } break;
     }
-    return true;
+    return false;
   }
 
   // The main window procedure for the Window class
@@ -116,7 +107,7 @@ namespace deskgui {
           break;
         }
         default:
-          if (!processWindowMessage(window, hwnd, uMsg, wParam, lParam)) return 0;
+          if (processWindowMessage(window, hwnd, uMsg, wParam, lParam)) return 0;
           break;
       }
     }
@@ -131,7 +122,7 @@ namespace deskgui {
     auto *window = reinterpret_cast<class Window *>(dwRefData);
 
     if (window) {
-      if (!processWindowMessage(window, hwnd, uMsg, wParam, lParam)) return 0;
+      if (processWindowMessage(window, hwnd, uMsg, wParam, lParam)) return 0;
     }
     return DefSubclassProc(hwnd, uMsg, wParam, lParam);
   }

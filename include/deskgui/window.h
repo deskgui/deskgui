@@ -113,57 +113,85 @@ namespace deskgui {
      * @brief Sets the size of the window.
      *
      * @param size The window size.
+     * @param type The type of pixels used for the size. Default is logical pixels.
+     *             It can be either logical or physical.
      */
-    void setSize(const ViewSize& size);
+    void setSize(const ViewSize& size, PixelsType type = PixelsType::kLogical);
 
     /**
      * @brief Gets the size of the window.
      *
+     * @param type The type of pixels used for the size. Default is logical pixels.
+     *             It can be either logical or physical.
      * @return The window size.
      */
-    [[nodiscard]] ViewSize getSize() const;
+    [[nodiscard]] ViewSize getSize(PixelsType type = PixelsType::kLogical) const;
 
     /**
      * @brief Sets the maximum size of the window.
      *
+     * Sets the maximum window size in logical or physical units.
+     *
      * @param size The maximum window size.
+     * @param type The type of pixels used for the size. Default is logical pixels.
+     *             It can be either logical or physical.
      */
-    void setMaxSize(const ViewSize& size);
+    void setMaxSize(const ViewSize& size, PixelsType type = PixelsType::kLogical);
 
     /**
      * @brief Gets the maximum size of the window.
      *
+     * Retrieves the maximum window size in logical or physical units.
+     *
+     * @param type The type of pixels used for the size. Default is logical pixels.
+     *             It can be either logical or physical.
      * @return The maximum window size.
      */
-    [[nodiscard]] ViewSize getMaxSize() const;
+    [[nodiscard]] ViewSize getMaxSize(PixelsType type = PixelsType::kLogical) const;
 
     /**
      * @brief Sets the minimum size of the window.
      *
+     * Sets the minimum window size in logical or physical units.
+     *
      * @param size The minimum window size.
+     * @param type The type of pixels used for the size. Default is logical pixels.
+     *             It can be either logical or physical.
      */
-    void setMinSize(const ViewSize& size);
+    void setMinSize(const ViewSize& size, PixelsType type = PixelsType::kLogical);
 
     /**
      * @brief Gets the minimum size of the window.
      *
+     * Retrieves the minimum window size in logical or physical units.
+     *
+     * @param type The type of pixels used for the size. Default is logical pixels.
+     *             It can be either logical or physical.
      * @return The minimum window size.
      */
-    [[nodiscard]] ViewSize getMinSize() const;
+    [[nodiscard]] ViewSize getMinSize(PixelsType type = PixelsType::kLogical) const;
 
     /**
      * @brief Sets the position of the window.
      *
+     * Sets the position of the window.
+     *
      * @param position The position of the window.
+     * @param type The type of pixels used for the position. Default is logical pixels.
+     *             It can be either logical or physical.
      */
-    void setPosition(const ViewRect& position);
+    void setPosition(const ViewRect& position, PixelsType type = PixelsType::kLogical);
 
     /**
      * @brief Gets the position of the window.
      *
-     * @return The minimum window size.
+     * Retrieves the position of the window.
+     *
+     * @param type The type of pixels used for the position. Default is logical pixels.
+     *             It can be either logical or physical.
+     * @return The position of the window.
      */
-    [[nodiscard]] ViewRect getPosition() const;
+    [[nodiscard]] ViewRect getPosition(PixelsType type = PixelsType::kLogical) const;
 
     /**
      * @brief Sets whether the window is resizable.
@@ -234,6 +262,17 @@ namespace deskgui {
     [[nodiscard]] void* getNativeWindow();
 
     /**
+     * @brief Sets the monitor scale factor.
+     *
+     * Sets the scaling factor representing the DPI (dots per inch) scale or display pixel density
+     * for the current screen or display. This factor is used to scale the window content to match
+     * the display resolution and pixel density.
+     *
+     * @param scaleFactor The display scale factor.
+     */
+    void setMonitorScaleFactor(float scaleFactor);
+
+    /**
      * @brief Retrieves the display scale factor.
      *
      * Retrieves the scaling factor representing the DPI (dots per inch) scale
@@ -241,7 +280,7 @@ namespace deskgui {
      *
      * @return The display scale factor.
      */
-    float getMonitorScaleFactor();
+    float getMonitorScaleFactor() const;
 
   private:
     // Window name
@@ -257,10 +296,14 @@ namespace deskgui {
     std::unordered_map<std::string, std::unique_ptr<Webview>> webviews_;
     mutable std::mutex webviewsMutex_;
 
-    // Minimum and maximum window sizes
-    ViewSize minSize_, maxSize_;
-    bool minSizeDefined_{false}, maxSizeDefined_{false};
+    // Window sizes (physical size)
+    ViewSize minSize_;
+    ViewSize maxSize_;
+    bool minSizeDefined_{false};
+    bool maxSizeDefined_{false};
     bool isExternalWindow_{false};
+
+    float monitorScaleFactor_ = 1.f;
   };
 
 }  // namespace deskgui
