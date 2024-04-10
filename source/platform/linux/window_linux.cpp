@@ -163,8 +163,8 @@ void Window::setPosition(const ViewRect& position, PixelsType type) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([position, type, this] { setPosition(position, type); });
   }
-  int width = position.right - position.left;
-  int height = position.bottom - position.top;
+  int width = position.R - position.L;
+  int height = position.B - position.T;
 
   if (type == PixelsType::kLogical) {
     width *= monitorScaleFactor_;
