@@ -59,41 +59,137 @@ void Window::setTitle(const std::string& title) {
   return std::string(gtk_window_get_title(pImpl_->window));
 }
 
-void Window::setSize(const ViewSize& size) {
+void Window::setSize(const ViewSize& size, PixelsType type){
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([size, this] { return setSize(size); });
+    return appHandler_->runOnMainThread([size, type, this] { setSize(size, type); });
   }
-  gtk_widget_set_size_request(GTK_WIDGET(pImpl_->window), size.first, size.second);
+
+  auto newSize = size;
+  if (type == PixelsType::kLogical) {
+    newSize = ViewSize{size.first * monitorScaleFactor_, size.second * monitorScaleFactor_};
+  }
+  gtk_widget_set_size_request(GTK_WIDGET(pImpl_->window), newSize.first, newSize.second);
 }
 
-[[nodiscard]] ViewSize Window::getSize() const {
+[[nodiscard]] ViewSize Window::getSize(PixelsType type) const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([this] { return getSize(); });
+    return appHandler_->runOnMainThread([type, this] { return getSize(type); });
   }
   gint width, height;
   gtk_window_get_size(pImpl_->window, &width, &height);
-  return {static_cast<size_t>(width), static_cast<size_t>(height)};
+
+  auto size = ViewSize{static_cast<size_t>(width), static_cast<size_t>(height)};
+  if (type == PixelsType::kLogical) {
+    size.first /= monitorScaleFactor_;
+    size.second /= monitorScaleFactor_;
+  }
+  return size;
 }
 
-void Window::setPosition(const ViewRect& position) {
+void Window::setMaxSize(const ViewSize& size, PixelsType type) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([position, this] { setPosition(position); });
+    return appHandler_->runOnMainThread([size, type, this] { setMaxSize(size, type); });
   }
-  int width = position.R - position.L;
-  int height = position.B - position.T;
+  ViewSize adjustedSize = size;
+  if (type == PixelsType::kLogical) {
+    adjustedSize.first *= monitorScaleFactor_;
+    adjustedSize.second *= monitorScaleFactor_;
+  }
+
+  maxSize_ = adjustedSize;
+  ViewSize minSize = getMinSize(PixelsType::kPhysical);
+
+  GdkGeometry hints;
+  hints.min_height = minSize.second;
+  hints.min_width = minSize.first;
+  hints.max_height = maxSize_.first;
+  hints.max_width = maxSize_.second;
+
+  GdkWindowHints h
+      = minSizeDefined_ ? GdkWindowHints(GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE) : GDK_HINT_MAX_SIZE;
+  gtk_window_set_geometry_hints(pImpl_->window, nullptr, &hints, h);
+}
+
+[[nodiscard]] ViewSize Window::getMaxSize(PixelsType type) const {
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([this, type]() { return getMaxSize(type); });
+  }
+  if (type == PixelsType::kLogical) {
+    return ViewSize{maxSize_.first / monitorScaleFactor_, maxSize_.second / monitorScaleFactor_};
+  } else {
+    return maxSize_;
+  }
+}
+
+void Window::setMinSize(const ViewSize& size, PixelsType type) {
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([size, type, this] { setMinSize(size, type); });
+  }
+
+  ViewSize adjustedSize = size;
+  if (type == PixelsType::kLogical) {
+    adjustedSize.first *= monitorScaleFactor_;
+    adjustedSize.second *= monitorScaleFactor_;
+  }
+
+  minSize_ = adjustedSize;
+  minSizeDefined_ = true;
+
+  ViewSize maxSize = getMaxSize(PixelsType::kPhysical);
+
+  GdkGeometry hints;
+  hints.min_width = minSize_.first;
+  hints.min_height = minSize_.second;
+  hints.max_height = maxSize.first;
+  hints.max_width = maxSize.second;
+
+  GdkWindowHints h
+      = maxSizeDefined_ ? GdkWindowHints(GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE) : GDK_HINT_MIN_SIZE;
+  gtk_window_set_geometry_hints(pImpl_->window, nullptr, &hints, h);
+}
+
+[[nodiscard]] ViewSize Window::getMinSize(PixelsType type) const {
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([this, type]() { return getMinSize(type); });
+  }
+  if (type == PixelsType::kLogical) {
+    return ViewSize{minSize_.first / monitorScaleFactor_, minSize_.second / monitorScaleFactor_};
+  } else {
+    return minSize_;
+  }
+}
+
+void Window::setPosition(const ViewRect& position, PixelsType type) {
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([position, type, this] { setPosition(position, type); });
+  }
+  int width = position.right - position.left;
+  int height = position.bottom - position.top;
+
+  if (type == PixelsType::kLogical) {
+    width *= monitorScaleFactor_;
+    height *= monitorScaleFactor_;
+  }
   gtk_window_resize(pImpl_->window, width, height);
   gtk_window_move(pImpl_->window, position.L, position.T);
 }
 
-[[nodiscard]] ViewRect Window::getPosition() const {
+[[nodiscard]] ViewRect Window::getPosition(PixelsType type) const {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([this] { return getPosition(); });
+    return appHandler_->runOnMainThread([type, this] { return getPosition(type); });
   }
-  gint L, T, W, H;
-  gtk_window_get_position(pImpl_->window, &L, &T);
-  gtk_window_get_size(pImpl_->window, &W, &H);
-  return {static_cast<size_t>(L), static_cast<size_t>(T), static_cast<size_t>(L + W),
-          static_cast<size_t>(T + H)};
+  gint x, y, width, height;
+  gtk_window_get_position(pImpl_->window, &x, &y);
+  gtk_window_get_size(pImpl_->window, &width, &height);
+
+  if (type == PixelsType::kLogical) {
+    x /= monitorScaleFactor_;
+    y /= monitorScaleFactor_;
+    width /= monitorScaleFactor_;
+    height /= monitorScaleFactor_;
+  }
+  return {static_cast<size_t>(x), static_cast<size_t>(y), static_cast<size_t>(x + width),
+          static_cast<size_t>(y + height)};
 }
 
 void Window::setResizable(bool state) {
@@ -165,45 +261,3 @@ void Window::setBackgroundColor(int red, int green, int blue) {
 }
 
 [[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->window); }
-
-void Window::setMinSize(const ViewSize& size) {
-  if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([size, this] { setMinSize(size); });
-  }
-
-  minSize_ = size;
-  minSizeDefined_ = true;
-
-  ViewSize maxSize = getMaxSize();
-
-  GdkGeometry hints;
-  hints.min_width = size.first;
-  hints.min_height = size.second;
-  hints.max_height = maxSize.first;
-  hints.max_width = maxSize.second;
-
-  GdkWindowHints h
-      = maxSizeDefined_ ? GdkWindowHints(GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE) : GDK_HINT_MIN_SIZE;
-  gtk_window_set_geometry_hints(pImpl_->window, nullptr, &hints, h);
-}
-
-void Window::setMaxSize(const ViewSize& size) {
-  if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([size, this] { setMaxSize(size); });
-  }
-  maxSize_ = size;
-  maxSizeDefined_ = true;
-  ViewSize minSize = getMinSize();
-
-  GdkGeometry hints;
-  hints.min_height = minSize.second;
-  hints.min_width = minSize.first;
-  hints.max_height = size.first;
-  hints.max_width = size.second;
-
-  GdkWindowHints h
-      = minSizeDefined_ ? GdkWindowHints(GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE) : GDK_HINT_MAX_SIZE;
-  gtk_window_set_geometry_hints(pImpl_->window, nullptr, &hints, h);
-}
-
-float Window::getMonitorScaleFactor() { return 1.f; }  // not implemented yed

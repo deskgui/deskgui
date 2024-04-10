@@ -27,6 +27,11 @@ namespace deskgui {
       return (lhs.L == rhs.L) && (lhs.T == rhs.T) && (lhs.R == rhs.R) && (lhs.B == rhs.B);
     }
   };
+  
+  enum class PixelsType {
+    kLogical,  // Device-independent pixels.
+    kPhysical  // Physical pixels.
+  };
 
   // Represents the default rectangle for a window.
   static const ViewRect kDefaultWindowRect = {0, 0, 600, 600};

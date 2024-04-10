@@ -40,7 +40,8 @@ int main() {
     auto loadingView = loadingWindow->createWebview(kLoadingViewName);
 
     // resize webview to window size
-    loadingView->resize(loadingWindow->getSize());
+    loadingWindow->connect<WindowResize>(
+        [&loadingView](const WindowResize& event) { loadingView->resize(event.size); });
 
     loadingView->loadResources(deskgui::getCompiledResources("splashscreen_resources"));
     loadingView->serveResource("loading.html");

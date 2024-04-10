@@ -62,5 +62,7 @@ Webview* Window::getWebview(const std::string& name) const {
   }
 }
 
-[[nodiscard]] ViewSize Window::getMaxSize() const { return maxSize_; }
-[[nodiscard]] ViewSize Window::getMinSize() const { return minSize_; }
+void Window::setMonitorScaleFactor(float scaleFactor) { monitorScaleFactor_ = scaleFactor; }
+
+float Window::getMonitorScaleFactor() const { return monitorScaleFactor_; }
+

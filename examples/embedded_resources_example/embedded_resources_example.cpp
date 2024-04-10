@@ -8,12 +8,8 @@
 #include <deskgui/app.h>
 #include <deskgui/resource_compiler.h>
 
-#include <filesystem>
-
 using namespace deskgui;
 using namespace deskgui::event;
-
-#include <thread>
 
 int main() {
   App app("EmbeddedResourcesExample");
@@ -39,7 +35,7 @@ int main() {
   window->connect<WindowResize>(
       [&webview](const WindowResize& event) { webview->resize(event.size); });
 
-  webview->connect<WebviewSourceChanged>([&window]() { window->show(); });
+  webview->connect<WebviewContentLoaded>([&window]() { window->show(); });
 
   app.run();
 }
