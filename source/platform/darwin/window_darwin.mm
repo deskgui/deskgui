@@ -99,7 +99,6 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
 Window::~Window() {
   if (!isExternalWindow_ && pImpl_->window != nil) {
     [pImpl_->window close];
-    [pImpl_->window release];
     pImpl_->window = nil;
   }
 }
