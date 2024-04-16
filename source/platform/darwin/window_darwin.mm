@@ -258,6 +258,12 @@ void Window::setResizable(bool state) {
   } else {
     pImpl_->window.styleMask &= ~NSWindowStyleMaskResizable;
   }
+
+  NSButton* zoomButton = [pImpl_->window standardWindowButton:NSWindowZoomButton];
+  if (zoomButton) {
+      [zoomButton setHidden:!state];
+      [zoomButton setEnabled:state];
+  }
 }
 
 [[nodiscard]] bool Window::isResizable() const {
