@@ -158,21 +158,11 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
   // Create a WKWebView
   pImpl_->webview = [[WKWebView alloc] initWithFrame:CGRectZero configuration:configuration];
   [pImpl_->webview setNavigationDelegate:scriptHandler];
+  [pImpl_->webview setFrame:[(__bridge id)window frame]];
 
   // Add the WKWebView to the native window or view
-  NSWindow* nativeWindow = static_cast<NSWindow*>(window);
-  NSView* view = nativeWindow.contentView;
-
-  [view addSubview:pImpl_->webview];
-
   pImpl_->webview.translatesAutoresizingMaskIntoConstraints = YES;
-  [pImpl_->webview setFrame:[view frame]];
-
-  // Add Auto Layout constraints
-  // [pImpl_->webview.leadingAnchor constraintEqualToAnchor:view.leadingAnchor].active = YES;
-  // [pImpl_->webview.trailingAnchor constraintEqualToAnchor:view.trailingAnchor].active = YES;
-  // [pImpl_->webview.topAnchor constraintEqualToAnchor:view.topAnchor].active = YES;
-  // [pImpl_->webview.bottomAnchor constraintEqualToAnchor:view.bottomAnchor].active = YES;
+  [(__bridge id)window addSubview:pImpl_->webview];
 
   injectScript(R"(
               window.webview = {
