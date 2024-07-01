@@ -134,7 +134,7 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
     WindowDelegate* windowDelegate = [[WindowDelegate alloc] window:this appHandler:appHandler_];
     [pImpl_->window setDelegate:windowDelegate];
   } else {
-    pImpl_->isExternalWindow = true;
+    isExternalWindow_ = true;
 
     if ([(__bridge id)nativeWindow isKindOfClass:[NSWindow class]]) {
       pImpl_->window = static_cast<NSWindow*>(nativeWindow);
@@ -157,7 +157,7 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
 }
 
 Window::~Window() {
-  if (!pImpl_->isExternalWindow && pImpl_->window != nil) {
+  if (!isExternalWindow_ && pImpl_->window != nil) {
     [pImpl_->window close];
     pImpl_->window = nil;
   }

@@ -301,6 +301,7 @@ namespace deskgui {
     ViewSize maxSize_;
     bool minSizeDefined_{false};
     bool maxSizeDefined_{false};
+    bool isExternalWindow_{false};
 
     float monitorScaleFactor_ = 1.f;
   };

@@ -20,6 +20,5 @@ namespace deskgui {
     NSWindow* window = nil;
     NSView* view = nil;
     id observer;
-    bool isExternalWindow = false;
   };
 }  // namespace deskgui
