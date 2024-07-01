@@ -16,10 +16,9 @@
 #include "utils/throttle.h"
 
 namespace deskgui {
-  constexpr size_t kResizeThrottleInMs = 15;
-
   struct Window::Impl {
-    NSWindow* window;
-    Throttle throttle{kResizeThrottleInMs};
+    NSWindow* window = nil;
+    NSView* view = nil;
+    id observer;
   };
 }  // namespace deskgui

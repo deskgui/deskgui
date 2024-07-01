@@ -15,22 +15,16 @@ using namespace deskgui;
 @interface WindowDelegate : NSObject <NSWindowDelegate>
 @property(nonatomic, assign) Window* window;
 @property(nonatomic, assign) AppHandler* appHandler;
-@property(nonatomic, assign) Throttle* throttle;
-- (instancetype)initWithWindow:(Window*)window
-                    appHandler:(AppHandler*)appHandler
-                      throttle:(Throttle*)throttle;
+- (instancetype)window:(Window*)window appHandler:(AppHandler*)appHandler;
 @end
 
 @implementation WindowDelegate
 
-- (instancetype)initWithWindow:(Window*)window
-                    appHandler:(AppHandler*)appHandler
-                      throttle:(Throttle*)throttle {
+- (instancetype)window:(Window*)window appHandler:(AppHandler*)appHandler {
   self = [super init];
   if (self) {
     _window = window;
     _appHandler = appHandler;
-    _throttle = throttle;
   }
   return self;
 }
@@ -50,16 +44,76 @@ using namespace deskgui;
 }
 
 - (void)windowDidResize:(NSNotification*)notification {
-  _throttle->trigger([=]() { _window->emit(event::WindowResize{_window->getSize(PixelsType::kPhysical)}); });
-}
-
-- (void)windowDidEndLiveResize:(NSNotification*)notification {
   _window->emit(event::WindowResize{_window->getSize(PixelsType::kPhysical)});
 }
 
 - (BOOL)windowShouldZoom:(NSWindow*)window toFrame:(NSRect)newFrame {
   return FALSE;
 }
+@end
+
+@interface WindowObserver : NSObject
+@property(nonatomic, assign) Window* window;
+@property(nonatomic, assign) NSWindow* nativeWindow;
+@property(nonatomic, assign) AppHandler* appHandler;
+
+- (instancetype)window:(Window*)window
+          nativeWindow:(NSWindow*)nativeWindow
+            appHandler:(AppHandler*)appHandler;
+@end
+
+@implementation WindowObserver
+
+- (instancetype)window:(Window*)window
+          nativeWindow:(NSWindow*)nativeWindow
+            appHandler:(AppHandler*)appHandler {
+  self = [super init];
+  if (self) {
+    _window = window;
+    _nativeWindow = nativeWindow;
+    _appHandler = appHandler;
+
+    // Register for notifications
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowDidLoadNotification:)
+                                                 name:NSWindowDidBecomeKeyNotification
+                                               object:_nativeWindow];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowWillCloseNotification:)
+                                                 name:NSWindowWillCloseNotification
+                                               object:_nativeWindow];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowDidResizeNotification:)
+                                                 name:NSWindowDidResizeNotification
+                                               object:_nativeWindow];
+  }
+  return self;
+}
+
+- (void)dealloc {
+  [self stopObserving];
+  [super dealloc];
+}
+
+- (void)stopObserving {
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
+  _window = nil;
+}
+
+- (void)windowDidLoadNotification:(NSNotification*)notification {
+  _window->emit(event::WindowShow{true});
+}
+
+- (void)windowWillCloseNotification:(NSNotification*)notification {
+  _window->emit(event::WindowClose{});
+}
+
+- (void)windowDidResizeNotification:(NSNotification*)notification {
+  _window->emit(event::WindowResize{_window->getSize()});
+}
+
 @end
 
 Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWindow)
@@ -76,30 +130,42 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
     [pImpl_->window setTitle:@"deskgui Window"];
     [pImpl_->window center];
     [pImpl_->window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
+    pImpl_->view = [pImpl_->window contentView];
+    WindowDelegate* windowDelegate = [[WindowDelegate alloc] window:this appHandler:appHandler_];
+    [pImpl_->window setDelegate:windowDelegate];
   } else {
     isExternalWindow_ = true;
+
     if ([(__bridge id)nativeWindow isKindOfClass:[NSWindow class]]) {
       pImpl_->window = static_cast<NSWindow*>(nativeWindow);
+      pImpl_->view = [pImpl_->window contentView];
     } else if ([(__bridge id)nativeWindow isKindOfClass:[NSView class]]) {
-      pImpl_->window = [static_cast<NSView*>(nativeWindow) window];
+      NSView* view = static_cast<NSView*>(nativeWindow);
+      pImpl_->window = [view window];
+      pImpl_->view = view;
     }
+
+    pImpl_->observer = [[WindowObserver alloc] window:this
+                                         nativeWindow:pImpl_->window
+                                           appHandler:appHandler_];
   }
-  if (!pImpl_->window) {
+  if (!pImpl_->window && !pImpl_->view) {
     NSError* error = [NSError errorWithDomain:NSOSStatusErrorDomain code:-1 userInfo:nil];
     throw std::system_error(static_cast<int>(error.code), std::system_category(),
                             error.localizedDescription.UTF8String);
   }
-
-  WindowDelegate* windowDelegate = [[WindowDelegate alloc] initWithWindow:this
-                                                               appHandler:appHandler_
-                                                                 throttle:&pImpl_->throttle];
-  [pImpl_->window setDelegate:windowDelegate];
 }
 
 Window::~Window() {
   if (!isExternalWindow_ && pImpl_->window != nil) {
     [pImpl_->window close];
     pImpl_->window = nil;
+  }
+
+  if (pImpl_->observer != nil) {
+    auto observer = (WindowObserver*)pImpl_->observer;
+    [observer stopObserving];
+    observer = nil;
   }
 }
 
@@ -140,7 +206,7 @@ void Window::setSize(const ViewSize& size, PixelsType type) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([type, this] { return getSize(type); });
   }
-  NSRect frame = pImpl_->window.contentView.frame;
+  NSRect frame = pImpl_->view.frame;
   auto size = ViewSize{frame.size.width, frame.size.height};
   if (type == PixelsType::kLogical) {
     size.first /= monitorScaleFactor_;
@@ -261,8 +327,8 @@ void Window::setResizable(bool state) {
 
   NSButton* zoomButton = [pImpl_->window standardWindowButton:NSWindowZoomButton];
   if (zoomButton) {
-      [zoomButton setHidden:!state];
-      [zoomButton setEnabled:state];
+    [zoomButton setHidden:!state];
+    [zoomButton setEnabled:state];
   }
 }
 
@@ -277,7 +343,8 @@ void Window::setResizable(bool state) {
 
 void Window::setDecorations(bool decorations) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([decorations, this] { return setDecorations(decorations); });
+    return appHandler_->runOnMainThread(
+        [decorations, this] { return setDecorations(decorations); });
   }
 
   NSWindowStyleMask styleMask = [pImpl_->window styleMask];
@@ -325,13 +392,14 @@ void Window::center() {
 
 void Window::setBackgroundColor(int red, int green, int blue) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([this, red, green, blue]() { setBackgroundColor(red, green, blue); });
+    return appHandler_->runOnMainThread(
+        [this, red, green, blue]() { setBackgroundColor(red, green, blue); });
   }
   NSColor* color = [NSColor colorWithCalibratedRed:red / 255.0
                                              green:green / 255.0
                                               blue:blue / 255.0
                                              alpha:1.0];
-  [pImpl_->window.contentView setBackgroundColor:color];
+  [pImpl_->view setBackgroundColor:color];
 }
 
-[[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->window); }
+[[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->view); }
