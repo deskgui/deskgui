@@ -10,11 +10,11 @@
 #import <Cocoa/Cocoa.h>
 
 namespace deskgui {
-  AppHandler::AppHandler(const std::string& name) : name_(name) {}
+AppHandler::AppHandler(const std::string& name) : name_(name) {}
 
-  void dispatchInMainQueue(std::function<void()> task) {
+void dispatchInMainQueue(std::function<void()> task) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      task();
+        task();
     });
-  }
+}
 }  // namespace deskgui

@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include <deskgui/webview_options.h>
 #include <deskgui/app_handler.h>
 #include <deskgui/event_bus.h>
 #include <deskgui/resource_compiler.h>
 #include <deskgui/types.h>
+#include <deskgui/webview_options.h>
 
 #include <memory>
 #include <unordered_map>
@@ -45,8 +45,8 @@ namespace deskgui {
      *               - On MacOS, it should be of type NSWindow.
      *               - On Linux, it should be of type GtkWindow.
      */
-    explicit Webview(const std::string& name, AppHandler* appHandler, void* window, const WebviewOptions& options);
-
+    explicit Webview(const std::string& name, AppHandler* appHandler, void* window,
+                     const WebviewOptions& options);
   public:
     /**
      * @brief Destroys the Webview object.
@@ -55,6 +55,14 @@ namespace deskgui {
 
     const std::string& getName() const;
 
+    /**
+     * Constants defining the protocol, host, and origin URL of the URL scheme
+     * used in the webview to serve custom resources.
+     */
+    static constexpr auto kProtocol = "webview";
+    inline static const std::string kOrigin = "webview://localhost/";
+    inline static const std::wstring kWOrigin = L"webview://localhost/";
+    
     // Settings
 
     /**
@@ -139,9 +147,9 @@ namespace deskgui {
      *
      * For example: "index.html", "src/assets/image.png"
      *
-     * @param resourceScheme The URL of the resource to be served.
+     * @param resourceUrl The URL of the resource to be served.
      */
-    void serveResource(const std::string& resourceScheme);
+    void serveResource(const std::string& resourceUrl);
 
     /**
      * @brief Clears all the resources that have been loaded into the application.
