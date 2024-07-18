@@ -65,6 +65,15 @@ namespace deskgui {
 
     environmentOptions->put_AdditionalBrowserArguments(additionalArguments.c_str());
 
+    // Register custom scheme
+    auto customSchemeRegistration
+        = Microsoft::WRL::Make<CoreWebView2CustomSchemeRegistration>(Webview::kWOrigin.c_str());
+    customSchemeRegistration->put_TreatAsSecure(true);
+    customSchemeRegistration->put_HasAuthorityComponent(true);
+    std::array<ICoreWebView2CustomSchemeRegistration*, 1> registrations
+        = {customSchemeRegistration.Get()};
+    environmentOptions->SetCustomSchemeRegistrations(registrations.size(), registrations.data());
+
     HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (FAILED(hr)) {
       return false;

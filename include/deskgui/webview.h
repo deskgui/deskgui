@@ -52,10 +52,10 @@ namespace deskgui {
      * Constants defining the protocol, host, and origin URL of the URL scheme
      * used in the webview to serve custom resources.
      */
-    static constexpr auto kProtocol = "https://";
+    static constexpr auto kProtocol = "webview://";
     static constexpr auto kHost = "localhost";
-    static constexpr auto kOrigin = "https://localhost/";
-    inline static const std::wstring kWOrigin = L"https://localhost/";
+    static constexpr auto kOrigin = "webview://localhost/";
+    inline static const std::wstring kWOrigin = L"webview://localhost/";
 
   public:
     /**
