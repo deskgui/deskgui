@@ -55,8 +55,8 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
 
   WebKitWebContext* context = webkit_web_view_get_context(pImpl_->webview);
   webkit_web_context_register_uri_scheme(
-      context, name_.c_str(), (WebKitURISchemeRequestCallback)pImpl_->onCustomSchemeRequest, this,
-      NULL);
+      context, Webview::kProtocol, (WebKitURISchemeRequestCallback)pImpl_->onCustomSchemeRequest,
+      this, NULL);
 
   injectScript(R"(
                 window.webview = {
