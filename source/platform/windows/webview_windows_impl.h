@@ -15,19 +15,21 @@
 #include <wrl.h>
 
 #include <atomic>
+#include <cstdlib>
 #include <optional>
+#include <utility>
 
 #include "deskgui/webview.h"
 
 namespace deskgui {
 
   struct Webview::Impl {
-    bool createWebviewInstance(const std::string& appName, HWND hWnd, const WebviewOptions& options);
+    bool createWebviewInstance(const std::string& appName, HWND hWnd,
+                               const WebviewOptions& options);
 
     wil::com_ptr<ICoreWebView2> webview_;
     wil::com_ptr<ICoreWebView2Controller> webviewController_;
 
-    const std::string rootScheme_ = "https://localhost/";
     std::optional<EventRegistrationToken> webResourceRequestedToken_;
     std::optional<EventRegistrationToken> acceleratorKeysToken_;
   };
@@ -62,6 +64,15 @@ namespace deskgui {
     }
 
     environmentOptions->put_AdditionalBrowserArguments(additionalArguments.c_str());
+
+    // Register custom scheme
+    auto customSchemeRegistration
+        = Microsoft::WRL::Make<CoreWebView2CustomSchemeRegistration>(Webview::kWOrigin.c_str());
+    customSchemeRegistration->put_TreatAsSecure(true);
+    customSchemeRegistration->put_HasAuthorityComponent(true);
+    std::array<ICoreWebView2CustomSchemeRegistration*, 1> registrations
+        = {customSchemeRegistration.Get()};
+    environmentOptions->SetCustomSchemeRegistrations(registrations.size(), registrations.data());
 
     HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (FAILED(hr)) {

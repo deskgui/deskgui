@@ -84,12 +84,9 @@ namespace deskgui {
 
     const gchar* uri = webkit_uri_scheme_request_get_uri(request);
 
-    auto schemeRoot = self->getName() + "://";
-    std::transform(schemeRoot.begin(), schemeRoot.end(), schemeRoot.begin(), ::tolower);
-
     auto it = std::find_if(self->resources_.begin(), self->resources_.end(),
                            [&](const Resource& resource) {
-                             return (schemeRoot + resource.scheme) == std::string(uri);
+                             return (Webview::kOrigin + resource.scheme) == std::string(uri);
                            });
 
     if (it != self->resources_.end()) {
