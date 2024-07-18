@@ -242,7 +242,7 @@ void Webview::loadResources(Resources&& resources) {
   if (!pImpl_->webResourceRequestedToken_) {
     pImpl_->webResourceRequestedToken_ = EventRegistrationToken();
 
-    pImpl_->webview_->AddWebResourceRequestedFilter((s2ws(pImpl_->rootScheme_) + L"*").c_str(),
+    pImpl_->webview_->AddWebResourceRequestedFilter((Webview::kWOrigin + L"*").c_str(),
                                                     COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
 
     pImpl_->webview_->add_WebResourceRequested(
@@ -266,10 +266,10 @@ void Webview::loadResources(Resources&& resources) {
               std::string requestedUrl = ws2s(url.get());
 
               // Check if the requested URL matches the resource you want to load
-              auto it = std::find_if(
-                  resources_.begin(), resources_.end(), [&](const Resource& resource) {
-                    return (pImpl_->rootScheme_ + resource.scheme) == requestedUrl;
-                  });
+              auto it = std::find_if(resources_.begin(), resources_.end(),
+                                     [&](const Resource& resource) {
+                                       return (Webview::kOrigin + resource.scheme) == requestedUrl;
+                                     });
 
               if (it != resources_.end()) {
                 auto webview2 = pImpl_->webview_.try_query<ICoreWebView2_2>();
@@ -301,11 +301,11 @@ void Webview::loadResources(Resources&& resources) {
   }
 }
 
-void Webview::serveResource(const std::string& resourceScheme) {
+void Webview::serveResource(const std::string& resourceUrl) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([this, resourceScheme] { serveResource(resourceScheme); });
+    return appHandler_->runOnMainThread([this, resourceUrl] { serveResource(resourceUrl); });
   }
-  navigate(pImpl_->rootScheme_ + resourceScheme);
+  navigate(Webview::kOrigin + resourceUrl);
 }
 
 void Webview::clearResources() {
@@ -317,7 +317,7 @@ void Webview::clearResources() {
 
   if (pImpl_->webResourceRequestedToken_) {
     pImpl_->webview_->remove_WebResourceRequested(pImpl_->webResourceRequestedToken_.value());
-    pImpl_->webview_->RemoveWebResourceRequestedFilter((s2ws(pImpl_->rootScheme_) + L"*").c_str(),
+    pImpl_->webview_->RemoveWebResourceRequestedFilter((Webview::kWOrigin + L"*").c_str(),
                                                        COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
     pImpl_->webResourceRequestedToken_.reset();
   }

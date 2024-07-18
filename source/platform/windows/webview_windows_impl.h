@@ -15,19 +15,21 @@
 #include <wrl.h>
 
 #include <atomic>
+#include <cstdlib>
 #include <optional>
+#include <utility>
 
 #include "deskgui/webview.h"
 
 namespace deskgui {
 
   struct Webview::Impl {
-    bool createWebviewInstance(const std::string& appName, HWND hWnd, const WebviewOptions& options);
+    bool createWebviewInstance(const std::string& appName, HWND hWnd,
+                               const WebviewOptions& options);
 
     wil::com_ptr<ICoreWebView2> webview_;
     wil::com_ptr<ICoreWebView2Controller> webviewController_;
 
-    const std::string rootScheme_ = "https://localhost/";
     std::optional<EventRegistrationToken> webResourceRequestedToken_;
     std::optional<EventRegistrationToken> acceleratorKeysToken_;
   };

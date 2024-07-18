@@ -61,7 +61,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>
 
 # Link dependencies
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-set(webview2_VERSION "1.0.2210.55" CACHE STRING "The WebView2 version to use")
+set(webview2_VERSION "1.0.2592.51" CACHE STRING "The WebView2 version to use" FORCE)
 include(platform_webview)
 include(rapidjson)
 
