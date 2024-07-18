@@ -158,7 +158,7 @@ void Webview::serveResource(const std::string& resourceUrl) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([resourceUrl, this] { serveResource(resourceUrl); });
   }
-  navigate(name_ + "://" + resourceUrl);
+  navigate(Webview::kOrigin + resourceUrl);
 }
 
 void Webview::clearResources() {
