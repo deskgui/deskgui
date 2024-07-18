@@ -47,16 +47,6 @@ namespace deskgui {
      */
     explicit Webview(const std::string& name, AppHandler* appHandler, void* window,
                      const WebviewOptions& options);
-
-    /**
-     * Constants defining the protocol, host, and origin URL of the URL scheme
-     * used in the webview to serve custom resources.
-     */
-    static constexpr auto kProtocol = "webview://";
-    static constexpr auto kHost = "localhost";
-    static constexpr auto kOrigin = "webview://localhost/";
-    inline static const std::wstring kWOrigin = L"webview://localhost/";
-
   public:
     /**
      * @brief Destroys the Webview object.
@@ -65,6 +55,14 @@ namespace deskgui {
 
     const std::string& getName() const;
 
+    /**
+     * Constants defining the protocol, host, and origin URL of the URL scheme
+     * used in the webview to serve custom resources.
+     */
+    static constexpr auto kProtocol = "webview";
+    inline static const std::string kOrigin = "webview://localhost/";
+    inline static const std::wstring kWOrigin = L"webview://localhost/";
+    
     // Settings
 
     /**
