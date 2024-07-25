@@ -301,6 +301,18 @@ void Window::center() {
                SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 }
 
+void Window::enable(bool state){
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([this, state]() { enable(state); });
+  }
+
+  EnableWindow(pImpl_->windowHandle, state ? TRUE : FALSE);
+
+  if(state) {
+    SetForegroundWindow(pImpl_->windowHandle);
+  }
+}
+
 void Window::setBackgroundColor(int red, int green, int blue) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([this, red, green, blue]() { setBackgroundColor(red, green, blue); });

@@ -248,6 +248,18 @@ void Window::center() {
   gtk_window_move(pImpl_->window, x, y);
 }
 
+void Window::enable(bool state){
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([this, state]() { enable(state); });
+  }
+
+  gtk_widget_set_sensitive(pImpl_->window, state ? TRUE : FALSE);
+
+  if (state) {
+    gtk_window_present(GTK_WINDOW(window));
+  }
+}
+
 void Window::setBackgroundColor(int red, int green, int blue) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([this, red, green, blue]() { setBackgroundColor(red, green, blue); });
