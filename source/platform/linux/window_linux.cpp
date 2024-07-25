@@ -256,7 +256,7 @@ void Window::enable(bool state){
   gtk_widget_set_sensitive(pImpl_->window, state ? TRUE : FALSE);
 
   if (state) {
-    gtk_window_present(GTK_WINDOW(window));
+    gtk_window_present(GTK_WINDOW(pImpl_->window));
   }
 }
 
