@@ -390,6 +390,18 @@ void Window::center() {
     [pImpl_->window center];
 }
 
+void Window::enable(bool state){
+  if (!appHandler_->isMainThread()) {
+    return appHandler_->runOnMainThread([this, state]() { enable(state); });
+  }
+
+  [pImpl_->window setIgnoresMouseEvents:state ? YES: NO];
+
+  if (state) {
+    [pImpl_->window makeKeyAndOrderFront:nil];
+  }
+}
+
 void Window::setBackgroundColor(int red, int green, int blue) {
     if (!appHandler_->isMainThread()) {
         return appHandler_->runOnMainThread(

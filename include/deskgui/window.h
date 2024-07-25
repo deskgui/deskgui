@@ -241,6 +241,13 @@ namespace deskgui {
     void center();
 
     /**
+     * Enables or disables the window.
+     *
+     * @param state The state to set the window to. `true` to enable the window, `false` to disable it.
+     */
+    void enable(bool state);
+
+    /**
      * @brief Sets the background color of the window.
      *
      * This method sets the background color of the window to the specified RGB color.
