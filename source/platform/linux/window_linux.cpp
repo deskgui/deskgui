@@ -253,7 +253,7 @@ void Window::enable(bool state){
     return appHandler_->runOnMainThread([this, state]() { enable(state); });
   }
 
-  gtk_widget_set_sensitive(pImpl_->window, state ? TRUE : FALSE);
+  gtk_widget_set_sensitive(GTK_WIDGET(pImpl_->window), state ? TRUE : FALSE);
 
   if (state) {
     gtk_window_present(GTK_WINDOW(pImpl_->window));
