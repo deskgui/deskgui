@@ -72,6 +72,12 @@ namespace deskgui {
       } break;
       case WM_DPICHANGED: {
         window->setMonitorScaleFactor(window->pImpl_->computeDpiScale(hwnd));
+
+        RECT *suggestedRect = reinterpret_cast<RECT *>(lParam);
+
+        SetWindowPos(hwnd, NULL, suggestedRect->left, suggestedRect->top,
+                     suggestedRect->right - suggestedRect->left,
+                     suggestedRect->bottom - suggestedRect->top, SWP_NOZORDER | SWP_NOACTIVATE);
       } break;
       case WM_ERASEBKGND: {
         HDC hdc = reinterpret_cast<HDC>(wParam);
