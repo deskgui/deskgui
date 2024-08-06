@@ -29,7 +29,7 @@ Webview* Window::createWebview(const std::string& name, const WebviewOptions& op
 
   try {
     auto result = webviews_.emplace(
-        name, std::unique_ptr<Webview>(new Webview(name, appHandler_, getNativeWindow(), options)));
+        name, std::unique_ptr<Webview>(new Webview(name, appHandler_, getContentView(), options)));
     if (result.second) {
       auto& webview = result.first->second;
       return webview.get();

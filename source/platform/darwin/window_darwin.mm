@@ -395,7 +395,7 @@ void Window::enable(bool state){
     return appHandler_->runOnMainThread([this, state]() { enable(state); });
   }
 
-  [pImpl_->window setIgnoresMouseEvents:state ? YES: NO];
+  [pImpl_->window setIgnoresMouseEvents:state ? NO: YES];
 
   if (state) {
     [pImpl_->window makeKeyAndOrderFront:nil];
@@ -414,4 +414,6 @@ void Window::setBackgroundColor(int red, int green, int blue) {
     [pImpl_->view setBackgroundColor:color];
 }
 
-[[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->view); }
+[[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->window); }
+
+[[nodiscard]] void* Window::getContentView() { return static_cast<void*>(pImpl_->view); }
