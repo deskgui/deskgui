@@ -72,3 +72,7 @@ Window* App::getWindow(const std::string& name) const {
 }
 
 void App::notifyWindowClosedFromUI(const std::string& name) { destroyWindow(name); }
+
+void App::executeOnMainThread(std::function<void()> task) {
+    runOnMainThread(task);
+}
