@@ -321,4 +321,6 @@ void Window::setBackgroundColor(int red, int green, int blue) {
   InvalidateRect(pImpl_->windowHandle, nullptr, TRUE);
 }
 
-void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->windowHandle); }
+[[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->windowHandle); }
+
+[[nodiscard]] void* Window::getContentView() { return static_cast<void*>(pImpl_->windowHandle); }
