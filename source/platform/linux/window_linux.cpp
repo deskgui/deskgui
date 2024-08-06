@@ -273,3 +273,5 @@ void Window::setBackgroundColor(int red, int green, int blue) {
 }
 
 [[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->window); }
+
+[[nodiscard]] void* Window::getContentView() { return static_cast<void*>(pImpl_->window); }

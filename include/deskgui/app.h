@@ -85,6 +85,17 @@ namespace deskgui {
      */
     Window* getWindow(const std::string& name) const;
 
+    /**
+     * @brief Posts a task to be executed on the main thread.
+     *
+     * This method schedules a task to be executed on the main thread.
+     * This is useful for ensuring thread-safe operations or interactions with the
+     * native window system that must occur on the main thread.
+     *
+     * @param task The task function to be posted for execution on the main thread.
+     */
+    void executeOnMainThread(std::function<void()> task);
+
   private:
     /**
      * @brief Override method for notifying the application that a window with the specified

@@ -269,6 +269,20 @@ namespace deskgui {
     [[nodiscard]] void* getNativeWindow();
 
     /**
+     * @brief Gets the content view handle where the webview is attached.
+     *
+     * This method is primarily used on macOS to return an NSView, which is the view 
+     * where the web view content is rendered. For other platforms, it returns the same 
+     * handle as `getNativeWindow`.
+     *
+     * @return The content view handle.
+     *         - On Windows, it returns a handle of type HWND.
+     *         - On macOS, it returns a handle of type NSView.
+     *         - On Linux, it returns a handle of type GtkWindow.
+     */
+    [[nodiscard]] void* getContentView();
+
+    /**
      * @brief Sets the monitor scale factor.
      *
      * Sets the scaling factor representing the DPI (dots per inch) scale or display pixel density
