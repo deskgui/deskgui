@@ -24,6 +24,10 @@ void App::run() {
 
     // Process messages
     while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+      if (msg.message == WM_QUIT) {
+        App::terminate();
+        break;
+      };
       TranslateMessage(&msg);
       DispatchMessage(&msg);
     }
