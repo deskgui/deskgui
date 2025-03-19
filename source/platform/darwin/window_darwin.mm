@@ -411,7 +411,8 @@ void Window::setBackgroundColor(int red, int green, int blue) {
                                                green:green / 255.0
                                                 blue:blue / 255.0
                                                alpha:1.0];
-    [pImpl_->view setBackgroundColor:color];
+    [pImpl_->view setWantsLayer:YES];
+    [pImpl_->view.layer setBackgroundColor:color.CGColor];
 }
 
 [[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->window); }
