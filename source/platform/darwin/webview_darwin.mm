@@ -165,6 +165,7 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
     pImpl_->webview = [[WKWebView alloc] initWithFrame:CGRectZero configuration:configuration];
     [pImpl_->webview setNavigationDelegate:scriptHandler];
     [pImpl_->webview setFrame:[(__bridge id)window frame]];
+    [pImpl_->webview setValue:@NO forKey:@"drawsBackground"];
     
     // Add the WKWebView to the native window or view
     pImpl_->webview.translatesAutoresizingMaskIntoConstraints = YES;
