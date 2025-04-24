@@ -98,6 +98,25 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
           .Get(),
       nullptr);
 
+  pImpl_->webview_->add_NewWindowRequested(
+      Callback<ICoreWebView2NewWindowRequestedEventHandler>(
+          [=](ICoreWebView2* sender, ICoreWebView2NewWindowRequestedEventArgs* args) -> HRESULT {
+            wil::unique_cotaskmem_string uri;
+            args->get_Uri(&uri);
+
+            event::WebviewWindowRequested event(ws2s(uri.get()));
+            emit(event);
+
+            if (event.isCancelled()) {
+              args->put_Handled(true);
+              return S_OK;
+            }
+
+            return S_OK;
+          })
+          .Get(),
+      nullptr);
+
   injectScript(R"(
                 window.webview = {
                     async postMessage(message) 
