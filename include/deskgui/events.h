@@ -139,7 +139,7 @@ namespace deskgui {
      * providing fine-grained control over new window spawning behavior.
      */
     struct WebviewWindowRequested: Event {
-      WebviewWindowRequested(const std::string &url) : Event(true), url(url) {}
+      WebviewWindowRequested(const std::string &urlArg) : Event(true), url(urlArg) {}
       const std::string url;  // The URL of the window requested to be opened.
     };
 
