@@ -30,6 +30,12 @@ int main() {
   window->connect<deskgui::event::WindowResize>(
       [&webview](const deskgui::event::WindowResize& event) { webview->resize(event.size); });
 
+  // Prevent opening new window
+  webview->connect<deskgui::event::WebviewWindowRequested>(
+      [&webview](deskgui::event::WebviewWindowRequested& event) {
+        event.preventDefault();
+      });
+
   // Run the application! 🚀
   app.run();
 }
