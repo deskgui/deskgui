@@ -112,6 +112,4 @@ The future development of deskgui includes the following planned features:
 
 ## Licenses
 
-Copyright (c) 2023 - deskgui
-
-MIT License
+Code is distributed under MIT license, feel free to use it in your proprietary projects as well.
