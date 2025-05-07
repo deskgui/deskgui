@@ -56,6 +56,10 @@ list(APPEND sources ${platform_sources})
 add_library(${PROJECT_NAME} ${headers} ${sources})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 LINKER_LANGUAGE CXX)
 
+if(APPLE)
+  set_property(TARGET ${PROJECT_NAME} PROPERTY COMPILE_OPTIONS "-fobjc-arc")
+endif()
+
 # being a cross-platform target, we enforce standards conformance on MSVC
 target_compile_options(${PROJECT_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive->")
 

@@ -5,116 +5,12 @@
  * MIT License
  */
 
-#include <system_error>
-
 #include "app_handler_darwin.h"
 #include "window_darwin_impl.h"
 
+#include <system_error>
+
 using namespace deskgui;
-
-@interface WindowDelegate : NSObject <NSWindowDelegate>
-@property(nonatomic, assign) Window* window;
-@property(nonatomic, assign) AppHandler* appHandler;
-- (instancetype)window:(Window*)window appHandler:(AppHandler*)appHandler;
-@end
-
-@implementation WindowDelegate
-
-- (instancetype)window:(Window*)window appHandler:(AppHandler*)appHandler {
-    self = [super init];
-    if (self) {
-        _window = window;
-        _appHandler = appHandler;
-    }
-    return self;
-}
-
-- (void)windowDidLoad:(NSNotification*)notification {
-    _window->emit(event::WindowShow{true});
-}
-
-- (BOOL)windowShouldClose:(NSWindow*)sender {
-    event::WindowClose closeEvent{};
-    _window->emit(closeEvent);
-    if (closeEvent.isCancelled()) {
-        return FALSE;
-    }
-    _appHandler->notifyWindowClosedFromUI(_window->getName());
-    return YES;
-}
-
-- (void)windowDidResize:(NSNotification*)notification {
-    _window->emit(event::WindowResize{_window->getSize(PixelsType::kPhysical)});
-}
-
-- (BOOL)windowShouldZoom:(NSWindow*)window toFrame:(NSRect)newFrame {
-    return FALSE;
-}
-@end
-
-@interface WindowObserver : NSObject
-@property(nonatomic, assign) Window* window;
-@property(nonatomic, assign) NSWindow* nativeWindow;
-@property(nonatomic, assign) AppHandler* appHandler;
-
-- (instancetype)window:(Window*)window
-          nativeWindow:(NSWindow*)nativeWindow
-            appHandler:(AppHandler*)appHandler;
-@end
-
-@implementation WindowObserver
-
-- (instancetype)window:(Window*)window
-          nativeWindow:(NSWindow*)nativeWindow
-            appHandler:(AppHandler*)appHandler {
-    self = [super init];
-    if (self) {
-        _window = window;
-        _nativeWindow = nativeWindow;
-        _appHandler = appHandler;
-        
-        // Register for notifications
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(windowDidLoadNotification:)
-                                                     name:NSWindowDidBecomeKeyNotification
-                                                   object:_nativeWindow];
-        
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(windowWillCloseNotification:)
-                                                     name:NSWindowWillCloseNotification
-                                                   object:_nativeWindow];
-        
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(windowDidResizeNotification:)
-                                                     name:NSWindowDidResizeNotification
-                                                   object:_nativeWindow];
-    }
-    return self;
-}
-
-- (void)dealloc {
-    [self stopObserving];
-    [super dealloc];
-}
-
-- (void)stopObserving {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    _window = nil;
-}
-
-- (void)windowDidLoadNotification:(NSNotification*)notification {
-    _window->emit(event::WindowShow{true});
-}
-
-- (void)windowWillCloseNotification:(NSNotification*)notification {
-    _window->emit(event::WindowClose{});
-}
-
-- (void)windowDidResizeNotification:(NSNotification*)notification {
-    _window->emit(event::WindowResize{_window->getSize()});
-}
-
-@end
 
 Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWindow)
 : name_(name), pImpl_{std::make_unique<Impl>()}, appHandler_(appHandler) {
@@ -131,23 +27,23 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
         [pImpl_->window center];
         [pImpl_->window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
         pImpl_->view = [pImpl_->window contentView];
-        WindowDelegate* windowDelegate = [[WindowDelegate alloc] window:this appHandler:appHandler_];
+        WindowDelegate* windowDelegate = [[WindowDelegate alloc] initWithWindow:this appHandler:appHandler_];
         [pImpl_->window setDelegate:windowDelegate];
     } else {
         isExternalWindow_ = true;
         
         if ([(__bridge id)nativeWindow isKindOfClass:[NSWindow class]]) {
-            pImpl_->window = static_cast<NSWindow*>(nativeWindow);
+            pImpl_->window = (__bridge NSWindow*)nativeWindow;
             pImpl_->view = [pImpl_->window contentView];
         } else if ([(__bridge id)nativeWindow isKindOfClass:[NSView class]]) {
-            NSView* view = static_cast<NSView*>(nativeWindow);
+            NSView* view = (__bridge NSView*)nativeWindow;
             pImpl_->window = [view window];
             pImpl_->view = view;
         }
         
-        pImpl_->observer = [[WindowObserver alloc] window:this
-                                             nativeWindow:pImpl_->window
-                                               appHandler:appHandler_];
+        pImpl_->observer = [[WindowObserver alloc] initWithWindow:this
+                                                    nativeWindow:pImpl_->window
+                                                      appHandler:appHandler_];
     }
     if (!pImpl_->window && !pImpl_->view) {
         NSError* error = [NSError errorWithDomain:NSOSStatusErrorDomain code:-1 userInfo:nil];
@@ -415,6 +311,10 @@ void Window::setBackgroundColor(int red, int green, int blue) {
     [pImpl_->view.layer setBackgroundColor:color.CGColor];
 }
 
-[[nodiscard]] void* Window::getNativeWindow() { return static_cast<void*>(pImpl_->window); }
+[[nodiscard]] void* Window::getNativeWindow() { 
+    return (__bridge void*)pImpl_->window; 
+}
 
-[[nodiscard]] void* Window::getContentView() { return static_cast<void*>(pImpl_->view); }
+[[nodiscard]] void* Window::getContentView() { 
+    return (__bridge void*)pImpl_->view; 
+}

@@ -10,164 +10,49 @@
 
 using namespace deskgui;
 
-extern NSString* const kSchemeUri;
-NSString* const kSchemeUri = [NSString stringWithUTF8String:Webview::kProtocol];
-extern NSString* const kScriptMessageCallback = @"deskgui_callback";
-
-@interface CustomNavigationDelegate
-: NSObject <WKScriptMessageHandler, WKNavigationDelegate, WKURLSchemeHandler> {
-    Webview* webview_;
-    std::vector<deskgui::Resource>* resources_;
-}
-@property(nonatomic, assign) BOOL contextMenuEnabled;
-@end
-
-@implementation CustomNavigationDelegate
-
-- (instancetype)initWithWebview:(Webview*)webview
-                      resources:(std::vector<deskgui::Resource>*)resources {
-    self = [super init];
-    if (self) {
-        webview_ = webview;
-        resources_ = resources;
-    }
-    return self;
-}
-
-- (void)userContentController:(nonnull WKUserContentController*)userContentController
-      didReceiveScriptMessage:(nonnull WKScriptMessage*)message {
-    if ([[message name] isEqualToString:kScriptMessageCallback]) {
-        NSDictionary* dict = (NSDictionary*)message.body;
-        NSData* data = [NSJSONSerialization dataWithJSONObject:dict
-                                                       options:NSJSONWritingPrettyPrinted
-                                                         error:nil];
-        NSString* jsonString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        webview_->onMessage([jsonString UTF8String]);
-    }
-}
-
-- (void)webView:(WKWebView*)webView didFinishNavigation:(WKNavigation*)navigation {
-    if (self.contextMenuEnabled) {
-        // Restore the original state if context menu is enabled
-        [webView evaluateJavaScript:
-         @"window.removeEventListener('contextmenu', (event) => event.preventDefault());"
-                  completionHandler:nil];
-    } else {
-        // Disable the context menu
-        [webView evaluateJavaScript:
-         @"window.addEventListener('contextmenu', (event) => event.preventDefault());"
-                  completionHandler:nil];
-    }
-    webview_->emit(event::WebviewContentLoaded{true});
-}
-
-- (void)webView:(WKWebView*)webView didCommitNavigation:(WKNavigation*)navigation {
-    if (webView.URL) {
-        NSString* urlString = [webView.URL absoluteString];
-        const char* urlCString = [urlString UTF8String];
-        std::string url = urlCString ? urlCString : "";
-        webview_->emit(event::WebviewSourceChanged{url});
-    }
-}
-
-- (void)webView:(WKWebView*)webView
-decidePolicyForNavigationAction:(WKNavigationAction*)navigationAction
-decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
-    NSString* urlString = navigationAction.request.URL.absoluteString;
-    std::string url = [urlString UTF8String];  // Convert NSString to std::string
-    
-    event::WebviewNavigationStarting event{url};
-    webview_->emit(event);
-    
-    if (event.isCancelled()) {
-        decisionHandler(WKNavigationActionPolicyCancel);
-    } else {
-        decisionHandler(WKNavigationActionPolicyAllow);
-    }
-}
-
-- (void)webView:(WKWebView*)webView startURLSchemeTask:(id<WKURLSchemeTask>)urlSchemeTask {
-    // Handle custom URL scheme requests
-    
-    if ([urlSchemeTask.request.URL.scheme isEqualToString:kSchemeUri] && resources_ != nullptr) {
-        // Get the resource data for the requested URL
-        NSString* resourceURL = urlSchemeTask.request.URL.relativeString;
-        std::string resourceURLString = [resourceURL UTF8String];
-        std::string resourceScheme = resourceURLString.substr(Webview::kOrigin.size());
-        
-        size_t secondLastDotPos = resourceScheme.rfind('.', resourceScheme.rfind('.') - 1);
-        if (secondLastDotPos != std::string::npos) {
-            resourceScheme = resourceScheme.substr(secondLastDotPos + 1);
-            size_t firstSlash = resourceScheme.find('/');
-            if (firstSlash != std::string::npos) {
-                resourceScheme = resourceScheme.substr(firstSlash + 1);
-            }
-        }
-        
-        // Check if the requested URL matches the resource you want to load
-        auto it = std::find_if(
-                               resources_->begin(), resources_->end(),
-                               [&](const deskgui::Resource& resource) { return resource.scheme == resourceScheme; });
-        
-        if (it != resources_->end()) {
-            NSData* resourceData = [NSData dataWithBytes:it->content.data() length:it->content.size()];
-            NSString* mime = [NSString stringWithUTF8String:it->mime.c_str()];
-            // Create a NSURLResponse with the resource data
-            NSURLResponse* response = [[NSURLResponse alloc] initWithURL:urlSchemeTask.request.URL
-                                                                MIMEType:mime
-                                                   expectedContentLength:resourceData.length
-                                                        textEncodingName:nil];
-            
-            // Send the response and resource data to the URL scheme task
-            [urlSchemeTask didReceiveResponse:response];
-            [urlSchemeTask didReceiveData:resourceData];
-            [urlSchemeTask didFinish];
-        }
-        return;
-    }
-}
-
-- (void)webView:(WKWebView*)webView stopURLSchemeTask:(id<WKURLSchemeTask>)urlSchemeTask {
-    // Todo
-}
-
-@end
-
 Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
                  [[maybe_unused]] const WebviewOptions& options)
 : pImpl_(std::make_unique<Impl>()), appHandler_(appHandler), name_(name) {
     if (window == nullptr) {
         throw std::invalid_argument("Window is a nullptr");
     }
-    // Create a WKUserContentController
+
     pImpl_->controller = [[WKUserContentController alloc] init];
     
-    // Configure the WKWebView with the user content controller
-    WKWebViewConfiguration* configuration = [[WKWebViewConfiguration alloc] init];
-    configuration.userContentController = pImpl_->controller;
+    pImpl_->configuration = [[WKWebViewConfiguration alloc] init];
+    pImpl_->configuration.userContentController = pImpl_->controller;
     
-    WKPreferences* preferences = [[WKPreferences alloc] init];
-    configuration.preferences = preferences;
+    pImpl_->preferences = [[WKPreferences alloc] init];
+    pImpl_->configuration.preferences = pImpl_->preferences;
     
-    // Script handler
-    CustomNavigationDelegate* scriptHandler =
-    [[CustomNavigationDelegate alloc] initWithWebview:this resources:&resources_];
-    [pImpl_->controller addScriptMessageHandler:scriptHandler name:kScriptMessageCallback];
-    [configuration setURLSchemeHandler:scriptHandler forURLScheme:kSchemeUri];
-    auto pool = configuration.processPool;
+    pImpl_->navigationDelegate = [[CustomNavigationDelegate alloc] initWithWebview:this resources:&resources_];
+    [pImpl_->controller addScriptMessageHandler:pImpl_->navigationDelegate name:kScriptMessageCallback];
+    [pImpl_->configuration setURLSchemeHandler:pImpl_->navigationDelegate forURLScheme:kSchemeUri];
+    
+    auto pool = pImpl_->configuration.processPool;
     SEL selector = NSSelectorFromString(@"_registerURLSchemeAsSecure:");
-    
     if ([pool respondsToSelector:selector]) {
-        [pool performSelector:selector withObject:kSchemeUri];
+        NSMethodSignature* signature = [pool methodSignatureForSelector:selector];
+        if (signature) {
+            NSInvocation* invocation = [NSInvocation invocationWithMethodSignature:signature];
+            [invocation setTarget:pool];
+            [invocation setSelector:selector];
+            id schemeUri = kSchemeUri;
+            [invocation setArgument:&schemeUri atIndex:2];
+            [invocation invoke];
+        }
     }
     
-    // Create a WKWebView
-    pImpl_->webview = [[WKWebView alloc] initWithFrame:CGRectZero configuration:configuration];
-    [pImpl_->webview setNavigationDelegate:scriptHandler];
+    pImpl_->webview = [[CustomWebview alloc] initWithFrame:CGRectZero configuration:pImpl_->configuration];
+    [pImpl_->webview setNavigationDelegate:pImpl_->navigationDelegate];
+    
+    // Set up UI delegate
+    pImpl_->uiDelegate = [[CustomUIDelegate alloc] initWithWebview:this];
+    [pImpl_->webview setUIDelegate:pImpl_->uiDelegate];
+    
     [pImpl_->webview setFrame:[(__bridge id)window frame]];
     [pImpl_->webview setValue:@NO forKey:@"drawsBackground"];
     
-    // Add the WKWebView to the native window or view
     pImpl_->webview.translatesAutoresizingMaskIntoConstraints = YES;
     [(__bridge id)window addSubview:pImpl_->webview];
     
@@ -184,18 +69,14 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
 
 Webview::~Webview() {
     [pImpl_->webview removeFromSuperview];
-    [pImpl_->webview release];
-    pImpl_->webview = nullptr;
-    
-    [pImpl_->controller release];
-    pImpl_->controller = nullptr;
+    [pImpl_->controller removeScriptMessageHandlerForName:kScriptMessageCallback];
 }
 
 void Webview::enableDevTools(bool state) {
     if (!appHandler_->isMainThread()) {
         return appHandler_->runOnMainThread([state, this]() { enableDevTools(state); });
     }
-    [pImpl_->webview.configuration.preferences setValue:@(state) forKey:@"developerExtrasEnabled"];
+    [pImpl_->preferences setValue:@(state) forKey:@"developerExtrasEnabled"];
 }
 
 void Webview::enableContextMenu(bool state) {
@@ -244,7 +125,6 @@ void Webview::navigate(const std::string& url) {
     if (!appHandler_->isMainThread()) {
         return appHandler_->runOnMainThread([url, this]() { navigate(url); });
     }
-    // Load the specified URL in the WKWebView
     NSURL* nsURL = [NSURL URLWithString:[NSString stringWithUTF8String:url.c_str()]];
     NSURLRequest* request = [NSURLRequest requestWithURL:nsURL];
     [pImpl_->webview loadRequest:request];
@@ -264,7 +144,6 @@ void Webview::loadFile(const std::string& path) {
     if (!appHandler_->isMainThread()) {
         return appHandler_->runOnMainThread([this]() { return getUrl(); });
     }
-    // Get the current URL of the WKWebView
     NSURL* currentURL = pImpl_->webview.URL;
     if (currentURL) {
         return std::string(currentURL.absoluteString.UTF8String);
@@ -277,7 +156,6 @@ void Webview::loadResources(Resources&& resources) {
         return appHandler_->runOnMainThread(
                                             [&resources, this]() { loadResources(std::move(resources)); });
     }
-    
     resources_ = std::move(resources);
 }
 
@@ -306,9 +184,6 @@ void Webview::injectScript(const std::string& script) {
     if (!appHandler_->isMainThread()) {
         return appHandler_->runOnMainThread([script, this]() { injectScript(script); });
     }
-    
-    // this script adds a function IPlugSendMsg that is used to call the platform webview messaging
-    // function in JS
     WKUserScript* script1 =
     [[WKUserScript alloc] initWithSource:[NSString stringWithUTF8String:script.c_str()]
                            injectionTime:WKUserScriptInjectionTimeAtDocumentStart
@@ -320,7 +195,6 @@ void Webview::executeScript(const std::string& script) {
     if (!appHandler_->isMainThread()) {
         return appHandler_->runOnMainThread([script, this]() { executeScript(script); });
     }
-    
     [pImpl_->webview evaluateJavaScript:[NSString stringWithUTF8String:script.c_str()]
                       completionHandler:nil];
 }

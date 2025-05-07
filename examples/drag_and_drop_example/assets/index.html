@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drag & Drop Example</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    #drop-area {
+      width: 100%;
+      height: 200px;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin: 20px 0;
+      transition: all 0.3s ease;
+      background-color: #fafafa;
+    }
+    #drop-area.dragover {
+      background-color: #f0f0f0;
+      border-color: #666;
+    }
+    #drop-area .icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+      color: #666;
+    }
+    #drop-area .text {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+    #drop-area .supported {
+      font-size: 14px;
+      color: #666;
+    }
+    #file-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .file-item {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 10px;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .file-item img {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .file-item .name {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #666;
+      word-break: break-all;
+    }
+    .error-message {
+      color: #dc3545;
+      text-align: center;
+      margin: 10px 0;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Drag & Drop</h1>
+  <div id="drop-area">
+    <div class="icon">📁</div>
+    <div class="text">Drag and drop files here</div>
+    <div class="supported">Supported formats: PNG, JPG, JPEG, GIF, BMP, WEBP</div>
+  </div>
+  <div id="error-message" class="error-message"></div>
+  <div id="file-list"></div>
+
+  <script>
+    const dropArea = document.getElementById('drop-area');
+    const fileList = document.getElementById('file-list');
+    const errorMessage = document.getElementById('error-message');
+    
+    const supportedTypes = [
+      'image/png',
+      'image/jpeg',
+      'image/jpg',
+      'image/gif',
+      'image/bmp',
+      'image/webp'
+    ];
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+      setTimeout(() => {
+        errorMessage.style.display = 'none';
+      }, 3000);
+    }
+
+    dropArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropArea.classList.add('dragover');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+      dropArea.classList.remove('dragover');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropArea.classList.remove('dragover');
+      
+      const files = e.dataTransfer.files;
+      if (files.length === 0) return;
+
+      let hasValidFiles = false;
+      fileList.innerHTML = '';
+      
+      Array.from(files).forEach(file => {
+        if (supportedTypes.includes(file.type)) {
+          hasValidFiles = true;
+          const fileItem = document.createElement('div');
+          fileItem.className = 'file-item';
+          
+          const img = document.createElement('img');
+          img.alt = file.name;
+          fileItem.appendChild(img);
+          
+          const name = document.createElement('div');
+          name.className = 'name';
+          name.textContent = file.name;
+          fileItem.appendChild(name);
+          
+          const blob = new Blob([file], { type: file.type });
+          img.src = URL.createObjectURL(blob);
+          
+          img.onload = () => URL.revokeObjectURL(img.src);
+          fileList.appendChild(fileItem);
+        }
+      });
+
+      if (!hasValidFiles) {
+        showError('Please drop only supported image files (PNG, JPG, JPEG, GIF, BMP, WEBP)');
+      }
+    });
+  </script>
+</body>
+</html>
