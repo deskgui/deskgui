@@ -67,6 +67,23 @@
       color: #666;
       word-break: break-all;
     }
+    .file-item .path {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #888;
+      word-break: break-all;
+      font-family: monospace;
+    }
+    .file-item .size {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #888;
+    }
+    .file-item .date {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #888;
+    }
     .error-message {
       color: #dc3545;
       text-align: center;
@@ -99,6 +116,18 @@
       'image/webp'
     ];
 
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function formatDate(timestamp) {
+      return new Date(timestamp).toLocaleString();
+    }
+
     function showError(message) {
       errorMessage.textContent = message;
       errorMessage.style.display = 'block';
@@ -125,7 +154,7 @@
 
       let hasValidFiles = false;
       fileList.innerHTML = '';
-      
+
       Array.from(files).forEach(file => {
         if (supportedTypes.includes(file.type)) {
           hasValidFiles = true;
@@ -140,6 +169,21 @@
           name.className = 'name';
           name.textContent = file.name;
           fileItem.appendChild(name);
+
+          const path = document.createElement('div');
+          path.className = 'path';
+          path.textContent = file.path || 'Path not available';
+          fileItem.appendChild(path);
+
+          const size = document.createElement('div');
+          size.className = 'size';
+          size.textContent = formatFileSize(file.size);
+          fileItem.appendChild(size);
+
+          const date = document.createElement('div');
+          date.className = 'date';
+          date.textContent = formatDate(file.lastModified);
+          fileItem.appendChild(date);
           
           const blob = new Blob([file], { type: file.type });
           img.src = URL.createObjectURL(blob);

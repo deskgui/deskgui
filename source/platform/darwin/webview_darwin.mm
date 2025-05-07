@@ -43,7 +43,12 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
         }
     }
     
-    pImpl_->webview = [[CustomWebview alloc] initWithFrame:CGRectZero configuration:pImpl_->configuration];
+    const auto nativeDragAndDrop = options.getOption<bool>(WebviewOptions::kActivateNativeDragAndDrop);
+    if (nativeDragAndDrop) {
+        pImpl_->webview = [[DragAndDropWebview alloc] initWithFrame:CGRectZero configuration:pImpl_->configuration];
+    } else {
+        pImpl_->webview = [[WKWebView alloc] initWithFrame:CGRectZero configuration:pImpl_->configuration];
+    }
     [pImpl_->webview setNavigationDelegate:pImpl_->navigationDelegate];
     
     // Set up UI delegate

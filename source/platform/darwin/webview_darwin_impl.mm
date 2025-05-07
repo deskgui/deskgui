@@ -155,13 +155,13 @@ createWebViewWithConfiguration:(WKWebViewConfiguration*)configuration
     // Load the URL in the same webview
     [webView loadRequest:navigationAction.request];
     
-    // Return nil to indicate that we didn’t create a new webview
+    // Return nil to indicate that we didn't create a new webview
     return nil;
 }
 
 @end
 
-@implementation CustomWebview
+@implementation DragAndDropWebview
 
 - (instancetype)initWithFrame:(NSRect)frame configuration:(WKWebViewConfiguration*)configuration {
     self = [super initWithFrame:frame configuration:configuration];

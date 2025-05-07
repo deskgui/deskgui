@@ -41,7 +41,7 @@
  * - Custom drag operations
  * - JavaScript event dispatching for drops
  */
-@interface CustomWebview : WKWebView <NSDraggingDestination>
+@interface DragAndDropWebview : WKWebView <NSDraggingDestination>
 - (instancetype)initWithFrame:(NSRect)frame configuration:(WKWebViewConfiguration*)configuration;
 @end
 

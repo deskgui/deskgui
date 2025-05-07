@@ -22,11 +22,15 @@ int main() {
   window->center();
   window->setBackgroundColor(249, 203, 103);
 
-  auto webview = window->createWebview("webview");
+  WebviewOptions options;
+  options.setOption(deskgui::WebviewOptions::kActivateNativeDragAndDrop, true);
+  auto webview = window->createWebview("webview", options);
     
   webview->loadResources(getCompiledResources("drag_and_drop_example_web_resources"));
   webview->serveResource("index.html");
-    
+  webview->enableContextMenu(true);
+  webview->enableDevTools(true);
+
   window->connect<WindowResize>(
       [&webview](const WindowResize& event) { webview->resize(event.size); });
 

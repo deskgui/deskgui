@@ -38,6 +38,13 @@ inline std::string createDropEventJS(const std::vector<std::string>& paths, doub
         ss << "    lastModified: new Date().getTime()";
         ss << "  });";
         
+        // Add the absolute path as a custom property
+        ss << "  Object.defineProperty(file" << &path << ", 'path', {";
+        ss << "    value: '" << path << "',";
+        ss << "    writable: false,";
+        ss << "    enumerable: true";
+        ss << "  });";
+        
         ss << "  dataTransfer.items.add(file" << &path << ");";
     }
     
