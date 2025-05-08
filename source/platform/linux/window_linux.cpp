@@ -59,7 +59,7 @@ void Window::setTitle(const std::string& title) {
   return std::string(gtk_window_get_title(pImpl_->window));
 }
 
-void Window::setSize(const ViewSize& size, PixelsType type){
+void Window::setSize(const ViewSize& size, PixelsType type) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([size, type, this] { setSize(size, type); });
   }
@@ -248,7 +248,7 @@ void Window::center() {
   gtk_window_move(pImpl_->window, x, y);
 }
 
-void Window::enable(bool state){
+void Window::enable(bool state) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([this, state]() { enable(state); });
   }
@@ -262,7 +262,8 @@ void Window::enable(bool state){
 
 void Window::setBackgroundColor(int red, int green, int blue) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([this, red, green, blue]() { setBackgroundColor(red, green, blue); });
+    return appHandler_->runOnMainThread(
+        [this, red, green, blue]() { setBackgroundColor(red, green, blue); });
   }
   GdkColor color;
   color.red = red * 256;

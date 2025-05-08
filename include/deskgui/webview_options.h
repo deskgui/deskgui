@@ -71,6 +71,7 @@ namespace deskgui {
     static constexpr auto kRemoteDebuggingPort = "remote-debugging-port";
     static constexpr auto kDisableGpu = "disable-gpu";
     static constexpr auto kAllowFileAccessFromFiles = "allow-file-access-from-files";
+    static constexpr auto kActivateNativeDragAndDrop = "activate-native-drag-and-drop";
   };
 
 }  // namespace deskgui

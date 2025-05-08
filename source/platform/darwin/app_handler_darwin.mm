@@ -5,16 +5,17 @@
  * MIT License
  */
 
-#include "app_handler_darwin.h"
-
 #import <Cocoa/Cocoa.h>
 
-namespace deskgui {
-AppHandler::AppHandler(const std::string& name) : name_(name) {}
+#include "app_handler_darwin.h"
 
-void dispatchInMainQueue(std::function<void()> task) {
+
+namespace deskgui {
+  AppHandler::AppHandler(const std::string& name) : name_(name) {}
+
+  void dispatchInMainQueue(std::function<void()> task) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        task();
+      task();
     });
-}
+  }
 }  // namespace deskgui

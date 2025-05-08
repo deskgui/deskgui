@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drag & Drop Example</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+      font-weight: bold;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .drop-section {
+      position: relative;
+    }
+    .drop-area {
+      width: 100%;
+      height: 150px;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #fafafa;
+      transition: all 0.2s ease;
+    }
+    .drop-area.dragover {
+      background-color: #f0f0f0;
+      border-color: #666;
+    }
+    .drop-area .text {
+      font-size: 16px;
+      margin: 10px 0;
+      color: #666;
+    }
+    .file-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .file-item {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 10px;
+      background: white;
+    }
+    .file-item img {
+      width: 100%;
+      height: 100px;
+      object-fit: contain;
+      background: #f5f5f5;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .file-item div {
+      word-break: break-all;
+      margin-bottom: 4px;
+    }
+    .file-item .path {
+      font-family: monospace;
+      font-size: 11px;
+      color: #999;
+    }
+    .error-message {
+      position: absolute;
+      top: -30px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: #dc3545;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .error-message.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <h1>Drag & Drop</h1>
+  <div class="container">
+    <div class="drop-section">
+      <div class="error-message" id="error1"></div>
+      <div id="drop1" class="drop-area">
+        <div class="text">Drop image files here</div>
+        <div class="text">Supported: PNG, JPG, GIF</div>
+      </div>
+      <div id="list1" class="file-list"></div>
+    </div>
+
+    <div class="drop-section">
+      <div class="error-message" id="error2"></div>
+      <div id="drop2" class="drop-area">
+        <div class="text">Drop image files here</div>
+        <div class="text">Supported: PNG, JPG, GIF</div>
+      </div>
+      <div id="list2" class="file-list"></div>
+    </div>
+  </div>
+
+  <script>
+    function setupDropArea(dropAreaId, listId, errorId, supportedTypes) {
+      const dropArea = document.getElementById(dropAreaId);
+      const fileList = document.getElementById(listId);
+      const errorElement = document.getElementById(errorId);
+      const fileData = new Map();
+
+      function showError(message) {
+        errorElement.textContent = message;
+        errorElement.classList.add('show');
+        setTimeout(() => errorElement.classList.remove('show'), 3000);
+      }
+
+      function formatSize(bytes) {
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(1024));
+        return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
+      }
+
+      function updateFileDisplay(fileName, data) {
+        const html = `
+          <img src="${data.imageUrl || ''}" />
+          <div>${fileName}</div>
+          <div>${formatSize(data.size || 0)}</div>
+          <div class="path">${data.path || ''}</div>
+        `;
+
+        let fileItem = Array.from(fileList.children)
+          .find(item => item.dataset.name === fileName);
+        
+        if (!fileItem) {
+          fileItem = document.createElement('div');
+          fileItem.className = 'file-item';
+          fileItem.dataset.name = fileName;
+          fileList.appendChild(fileItem);
+        }
+
+        fileItem.innerHTML = html;
+      }
+
+      function isValidFileType(fileName) {
+        const ext = fileName.split('.').pop().toLowerCase();
+        return supportedTypes.includes(ext);
+      }
+
+      // Handle drag events
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          dropArea.classList.toggle('dragover', eventName === 'dragenter' || eventName === 'dragover');
+        });
+      });
+
+      // Handle file drop
+      dropArea.addEventListener('drop', (e) => {
+        const files = Array.from(e.dataTransfer.files);
+        const invalidFiles = files.filter(file => !isValidFileType(file.name));
+        
+        if (invalidFiles.length > 0) {
+          showError(`Unsupported file type. Please use: ${supportedTypes.join(', ')}`);
+          return;
+        }
+
+        files.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const data = fileData.get(file.name) || {};
+            fileData.set(file.name, {
+              ...data,
+              size: file.size,
+              imageUrl: e.target.result
+            });
+            updateFileDisplay(file.name, fileData.get(file.name));
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      // Handle native drop
+      dropArea.addEventListener('nativedrop', (e) => {
+        const paths = e.detail.paths;
+        const invalidFiles = paths.filter(path => !isValidFileType(path));
+        
+        if (invalidFiles.length > 0) {
+          showError(`Unsupported file type. Please use: ${supportedTypes.join(', ')}`);
+          return;
+        }
+
+        paths.forEach(path => {
+          const fileName = path.split(/[\\/]/).pop();
+          const data = fileData.get(fileName) || {};
+          fileData.set(fileName, {
+            ...data,
+            path: path
+          });
+          updateFileDisplay(fileName, fileData.get(fileName));
+        });
+      });
+    }
+
+    // Setup both drop areas with supported types
+    const supportedTypes = ['png', 'jpg', 'jpeg', 'gif'];
+    setupDropArea('drop1', 'list1', 'error1', supportedTypes);
+    setupDropArea('drop2', 'list2', 'error2', supportedTypes);
+  </script>
+</body>
+</html>

@@ -13,26 +13,26 @@
 using namespace deskgui;
 
 void App::run() {
-    if (isRunning_.load()) {
-        return;
-    }
-    
-    isRunning_.store(true);
-    mainThreadId_ = std::this_thread::get_id();
-    
-    @autoreleasepool {
-        [NSApplication sharedApplication];
-        [NSApp run];
-    }
+  if (isRunning_.load()) {
+    return;
+  }
+
+  isRunning_.store(true);
+  mainThreadId_ = std::this_thread::get_id();
+
+  @autoreleasepool {
+    [NSApplication sharedApplication];
+    [NSApp run];
+  }
 }
 
 void App::terminate() {
-    if (!isMainThread()) {
-        return runOnMainThread([this]() { terminate(); });
-    }
-    
-    if (isRunning_.load()) {
-        isRunning_.store(false);
-        [NSApp terminate:nil];
-    }
+  if (!isMainThread()) {
+    return runOnMainThread([this]() { terminate(); });
+  }
+
+  if (isRunning_.load()) {
+    isRunning_.store(false);
+    [NSApp terminate:nil];
+  }
 }

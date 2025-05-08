@@ -21,7 +21,7 @@
 
 using namespace deskgui;
 
-App::App(const std::string& name) : AppHandler(name){}
+App::App(const std::string& name) : AppHandler(name) {}
 
 Window* App::createWindow(const std::string& name, void* nativeWindow) {
   if (!isMainThread()) {
@@ -73,6 +73,4 @@ Window* App::getWindow(const std::string& name) const {
 
 void App::notifyWindowClosedFromUI(const std::string& name) { destroyWindow(name); }
 
-void App::executeOnMainThread(std::function<void()> task) {
-    runOnMainThread(task);
-}
+void App::executeOnMainThread(std::function<void()> task) { runOnMainThread(task); }

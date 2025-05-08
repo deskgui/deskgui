@@ -65,4 +65,3 @@ Webview* Window::getWebview(const std::string& name) const {
 void Window::setMonitorScaleFactor(float scaleFactor) { monitorScaleFactor_ = scaleFactor; }
 
 float Window::getMonitorScaleFactor() const { return monitorScaleFactor_; }
-
