@@ -21,6 +21,8 @@ deskgui offers the following key features:
 - **Webview flexibility**: Create multiple windows and webviews as needed, and customize and manipulate them dynamically to adapt to your application's requirements on the fly.
 
 - **Thread safety**: It guarantees thread safety when dealing with webviews and windows, allowing you to execute operations across various threads without the burden of synchronization concerns.
+
+- **Drag and Drop**: Native drag and drop support for retrieving absolute file paths, available on Windows and macOS platforms.
   
 ### Platforms
 
@@ -68,6 +70,9 @@ cmake --build build
 ## Examples
 Explore more practical implementations in [examples](./examples).
 
+### Drag and Drop Example
+The library provides native drag and drop support, which is particularly useful for retrieving absolute file paths from the operating system. This feature is currently available on Windows and macOS platforms. Check out the [drag and drop example](./examples/drag_and_drop_example/drag_and_drop_example.cpp) to see how to implement this functionality in your application.
+
 ### Basic example
 ```cpp
 #include <deskgui/app.h>
@@ -104,7 +109,6 @@ int main() {
 
 The future development of deskgui includes the following planned features:
 
-- [ ] Drag and drop
 - [ ] App Tray
 - [ ] App Signing
 - [ ] Native Notifications
