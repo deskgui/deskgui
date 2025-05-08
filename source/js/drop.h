@@ -13,16 +13,16 @@
 #include <string>
 #include <vector>
 
-#include "file.h"
+#include "js/events.h"
 
 #ifdef WIN32
-#include "strings.h"
+#include "utils/strings.h"
 #endif
 
-namespace deskgui::utils {
+namespace deskgui::js {
 
-  inline std::string createDropEventJS(const std::vector<std::filesystem::path>& paths, double x,
-                                       double y) {
+  inline std::string createDropEvent(const std::vector<std::filesystem::path>& paths, double x,
+                                     double y) {
     std::stringstream ss;
     ss << "(() => {";
 
@@ -31,7 +31,7 @@ namespace deskgui::utils {
     for (size_t i = 0; i < paths.size(); ++i) {
       if (i > 0) ss << ",";
 #ifdef WIN32
-      ss << "'" << escapeBackslashes(paths[i].string()) << "'";
+      ss << "'" << utils::escapeBackslashes(paths[i].string()) << "'";
 #else
       ss << "'" << paths[i].string() << "'";
 #endif
@@ -42,19 +42,17 @@ namespace deskgui::utils {
     ss << "  const element = document.elementFromPoint(" << x << ", " << y << ");";
 
     // Create custom event with paths data
-    ss << "  const customEvent = new CustomEvent('nativedrop', {";
+    ss << "  const customEvent = new CustomEvent('" << kDropEventName << "', {";
     ss << "    bubbles: true,";
     ss << "    cancelable: true,";
-    ss << "    detail: {";
-    ss << "      paths: paths,";
-    ss << "      x: " << x << ",";
-    ss << "      y: " << y;
-    ss << "    }";
+    ss << "    detail: { paths }";
     ss << "  });";
 
     // Dispatch event on element under mouse position
     ss << "  if (element) {";
     ss << "    element.dispatchEvent(customEvent);";
+    ss << "  } else {";
+    ss << "    window.dispatchEvent(customEvent);";
     ss << "  }";
 
     ss << "})();";
@@ -62,4 +60,17 @@ namespace deskgui::utils {
     return ss.str();
   }
 
-}  // namespace deskgui::utils
+  static const auto kWindowsDropListener = R"(
+      document.addEventListener('drop', function(e) {
+        window.chrome.webview.postMessageWithAdditionalObjects(
+          JSON.stringify({
+            type: 'deskgui-files-dropped',
+            x: e.clientX,
+            y: e.clientY
+          }),
+          e.dataTransfer.files
+        );
+      }, true);
+    )";
+
+}  // namespace deskgui::js

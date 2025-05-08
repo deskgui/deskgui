@@ -10,6 +10,7 @@
       max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
+      background-color: #e4cb35;
     }
     h1 {
       text-align: center;
@@ -193,7 +194,7 @@
       });
 
       // Handle native drop
-      dropArea.addEventListener('nativedrop', (e) => {
+      dropArea.addEventListener('deskgui:drop', (e) => {
         const paths = e.detail.paths;
         const invalidFiles = paths.filter(path => !isValidFileType(path));
         

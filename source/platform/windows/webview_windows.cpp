@@ -10,10 +10,9 @@
 #include <iostream>
 
 #include "app_handler_windows.h"
+#include "js/drop.h"
 #include "utils/strings.h"
-#include "utils/webview_js.h"
 #include "webview_windows_impl.h"
-
 
 using namespace deskgui;
 using namespace deskgui::utils;
@@ -135,18 +134,7 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
                 )");
 
   if (options.getOption<bool>(WebviewOptions::kActivateNativeDragAndDrop)) {
-    injectScript(R"(
-      window.addEventListener('drop', function(e) {
-        window.chrome.webview.postMessageWithAdditionalObjects(
-          JSON.stringify({
-            type: 'deskgui-files-dropped',
-            x: e.clientX,
-            y: e.clientY
-          }),
-          e.dataTransfer.files
-        );
-      }, true);
-    )");
+    injectScript(js::kWindowsDropListener);
   }
 
   enableAcceleratorKeys(false);
