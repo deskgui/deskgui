@@ -16,7 +16,7 @@
 #include "js/events.h"
 
 #ifdef WIN32
-#include "strings.h"
+#include "utils/strings.h"
 #endif
 
 namespace deskgui::js {
@@ -31,7 +31,7 @@ namespace deskgui::js {
     for (size_t i = 0; i < paths.size(); ++i) {
       if (i > 0) ss << ",";
 #ifdef WIN32
-      ss << "'" << escapeBackslashes(paths[i].string()) << "'";
+      ss << "'" << utils::escapeBackslashes(paths[i].string()) << "'";
 #else
       ss << "'" << paths[i].string() << "'";
 #endif

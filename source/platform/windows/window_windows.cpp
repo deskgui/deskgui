@@ -11,9 +11,9 @@
 #include "utils/strings.h"
 #include "window_windows_impl.h"
 
-
 using namespace deskgui;
 using namespace deskgui::utils;
+
 Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWindow)
     : name_(name), pImpl_{std::make_unique<Impl>()}, appHandler_(appHandler) {
   SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
