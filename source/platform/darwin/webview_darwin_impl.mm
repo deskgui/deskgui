@@ -193,8 +193,8 @@ NSString* const deskgui::kScriptMessageCallback = @"deskgui_callback";
   NSPoint dropPoint = [self convertPoint:[sender draggingLocation] fromView:nil];
 
   // Use the utility function to generate the JavaScript code
-  std::string jsCode = js::createDropEvent(paths, dropPoint.x, dropPoint.y);
-  [self evaluateJavaScript:[NSString stringWithUTF8String:jsCode.c_str()] completionHandler:nil];
+  std::string jsEvent = js::createDropEvent(paths, dropPoint.x, dropPoint.y);
+  [self evaluateJavaScript:[NSString stringWithUTF8String:jsEvent.c_str()] completionHandler:nil];
 
   return YES;
 }
