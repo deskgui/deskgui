@@ -7,9 +7,10 @@
 
 #pragma once
 
+#include <AppKit/AppKit.h>
+
 #include "deskgui/window.h"
 
-#include <AppKit/AppKit.h>
 
 /**
  * WindowDelegate handles all NSWindow delegate events.
@@ -45,14 +46,14 @@
 
 namespace deskgui {
 
-/**
- * Implementation details for the Window class.
- * Contains the native NSWindow components used by the Window.
- */
-struct Window::Impl {
-    NSWindow* window = nullptr;        ///< The NSWindow instance
-    NSView* view = nullptr;           ///< The content view of the window
-    id observer = nullptr;            ///< Window observer for notifications
-};
+  /**
+   * Implementation details for the Window class.
+   * Contains the native NSWindow components used by the Window.
+   */
+  struct Window::Impl {
+    NSWindow* window = nullptr;  ///< The NSWindow instance
+    NSView* view = nullptr;      ///< The content view of the window
+    id observer = nullptr;       ///< Window observer for notifications
+  };
 
-} // namespace deskgui
+}  // namespace deskgui

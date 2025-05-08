@@ -4,62 +4,59 @@
  * Copyright (c) 2023 deskgui
  * MIT License
  */
- 
+
 #pragma once
 
-#include "file.h"
-
+#include <filesystem>
+#include <regex>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
-namespace utils {
+#include "file.h"
+#include "strings.h"
 
-inline std::string createDropEventJS(const std::vector<std::string>& paths, double x, double y) {
+namespace deskgui::utils {
+
+  inline std::string createDropEventJS(const std::vector<std::filesystem::path>& paths, double x,
+                                       double y) {
     std::stringstream ss;
     ss << "(() => {";
-    ss << "  const dataTransfer = new DataTransfer();";
-    
-    // Create File objects directly for each path
-    for (const auto& path : paths) {
-        const auto& data = readFileData(path);
-        const std::string& mimeType = getMimeType(path);
-        const std::string& fileName = std::filesystem::path(path).filename().string();
-        
-        ss << "  const blob" << &path << " = new Blob([new Uint8Array([";
-        for (size_t j = 0; j < data.size(); ++j) {
-            if (j > 0) ss << ",";
-            ss << static_cast<int>(data[j]);
-        }
-        ss << "])], { type: '" << mimeType << "' });";
-        
-        ss << "  const file" << &path << " = new File([blob" << &path << "], '" << fileName << "', {";
-        ss << "    type: '" << mimeType << "',";
-        ss << "    lastModified: new Date().getTime()";
-        ss << "  });";
-        
-        // Add the absolute path as a custom property
-        ss << "  Object.defineProperty(file" << &path << ", 'path', {";
-        ss << "    value: '" << path << "',";
-        ss << "    writable: false,";
-        ss << "    enumerable: true";
-        ss << "  });";
-        
-        ss << "  dataTransfer.items.add(file" << &path << ");";
+
+    // Create array of paths
+    ss << "  const paths = [";
+    for (size_t i = 0; i < paths.size(); ++i) {
+      if (i > 0) ss << ",";
+#ifdef WIN32
+      ss << "'" << escapeBackslashes(paths[i].string()) << "'";
+#else
+      ss << "'" << paths[i].string() << "'";
+#endif
     }
-    
-    ss << "  const dropEvent = new DragEvent('drop', {";
+    ss << "];";
+
+    // Get element under mouse position
+    ss << "  const element = document.elementFromPoint(" << x << ", " << y << ");";
+
+    // Create custom event with paths data
+    ss << "  const customEvent = new CustomEvent('nativedrop', {";
     ss << "    bubbles: true,";
     ss << "    cancelable: true,";
-    ss << "    dataTransfer: dataTransfer,";
-    ss << "    clientX: " << x << ",";
-    ss << "    clientY: " << y;
+    ss << "    detail: {";
+    ss << "      paths: paths,";
+    ss << "      x: " << x << ",";
+    ss << "      y: " << y;
+    ss << "    }";
     ss << "  });";
-    
-    ss << "  document.elementFromPoint(" << x << ", " << y << ")?.dispatchEvent(dropEvent);";
-    ss << "})();";
-    
-    return ss.str();
-}
 
-} // namespace utils 
+    // Dispatch event on element under mouse position
+    ss << "  if (element) {";
+    ss << "    element.dispatchEvent(customEvent);";
+    ss << "  }";
+
+    ss << "})();";
+
+    return ss.str();
+  }
+
+}  // namespace deskgui::utils

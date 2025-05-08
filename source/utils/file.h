@@ -5,20 +5,20 @@
  * Copyright (c) 2023 deskgui
  * MIT License
  */
- 
+
 #pragma once
 
-#include <string>
-#include <vector>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
-#include <algorithm>
+#include <string>
+#include <vector>
 
-namespace utils {
 
-inline std::string getMimeType(const std::string& path) {
-    std::filesystem::path fsPath(path);
-    std::string ext = fsPath.extension().string();
+namespace deskgui::utils {
+
+  inline std::string getMimeType(const std::filesystem::path& path) {
+    std::string ext = path.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     if (ext == ".png") return "image/png";
@@ -40,23 +40,23 @@ inline std::string getMimeType(const std::string& path) {
     if (ext == ".ogg") return "audio/ogg";
     if (ext == ".webm") return "video/webm";
     return "application/octet-stream";
-}
+  }
 
-inline std::vector<uint8_t> readFileData(const std::string& path) {
+  inline std::vector<uint8_t> readFileData(const std::filesystem::path& path) {
     std::ifstream file(path, std::ios::binary);
     if (!file) {
-        return {};
+      return {};
     }
-    
+
     // Get file size
     file.seekg(0, std::ios::end);
     size_t size = file.tellg();
     file.seekg(0, std::ios::beg);
-    
+
     // Read file data
     std::vector<uint8_t> data(size);
     file.read(reinterpret_cast<char*>(data.data()), size);
     return data;
-}
+  }
 
-} // namespace utils 
+}  // namespace deskgui::utils

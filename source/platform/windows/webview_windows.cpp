@@ -10,10 +10,13 @@
 #include <iostream>
 
 #include "app_handler_windows.h"
+#include "utils/strings.h"
+#include "utils/webview_js.h"
 #include "webview_windows_impl.h"
-#include "window_windows_impl.h"
+
 
 using namespace deskgui;
+using namespace deskgui::utils;
 using namespace Microsoft::WRL;
 
 Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
@@ -28,19 +31,24 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
   }
 
   // Message received event
-  pImpl_->webview_->add_WebMessageReceived(Callback<ICoreWebView2WebMessageReceivedEventHandler>(
-                                               [=]([[maybe_unused]] ICoreWebView2* sender,
-                                                   ICoreWebView2WebMessageReceivedEventArgs* args) {
-                                                 wil::unique_cotaskmem_string jsonString;
-                                                 args->get_WebMessageAsJson(&jsonString);
-                                                 onMessage(ws2s(jsonString.get()).c_str());
-                                                 return S_OK;
-                                               })
-                                               .Get(),
-                                           nullptr);
+  pImpl_->webview->add_WebMessageReceived(
+      Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+          [this]([[maybe_unused]] ICoreWebView2* sender,
+                 ICoreWebView2WebMessageReceivedEventArgs* args) {
+            if (pImpl_->handleDragAndDrop(args)) {
+              return S_OK;
+            }
+
+            wil::unique_cotaskmem_string message;
+            args->get_WebMessageAsJson(&message);
+            onMessage(ws2s(message.get()));
+            return S_OK;
+          })
+          .Get(),
+      nullptr);
 
   // Handle the navigation starting event
-  pImpl_->webview_->add_NavigationStarting(
+  pImpl_->webview->add_NavigationStarting(
       Callback<ICoreWebView2NavigationStartingEventHandler>(
           [=](ICoreWebView2* sender, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT {
             wil::unique_cotaskmem_string uri;
@@ -57,7 +65,7 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
       nullptr);
 
   // Handle frame navigation starting event (if needed)
-  pImpl_->webview_->add_FrameNavigationStarting(
+  pImpl_->webview->add_FrameNavigationStarting(
       Callback<ICoreWebView2NavigationStartingEventHandler>(
           [=](ICoreWebView2* sender, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT {
             wil::unique_cotaskmem_string uri;
@@ -75,7 +83,7 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
       nullptr);
 
   // Handle navigation completed event
-  pImpl_->webview_->add_NavigationCompleted(
+  pImpl_->webview->add_NavigationCompleted(
       Callback<ICoreWebView2NavigationCompletedEventHandler>(
           [=]([[maybe_unused]] ICoreWebView2* sender,
               ICoreWebView2NavigationCompletedEventArgs* args) -> HRESULT {
@@ -88,7 +96,7 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
       nullptr);
 
   // Handle source changed event
-  pImpl_->webview_->add_SourceChanged(
+  pImpl_->webview->add_SourceChanged(
       Callback<ICoreWebView2SourceChangedEventHandler>(
           [=]([[maybe_unused]] ICoreWebView2* sender,
               [[maybe_unused]] ICoreWebView2SourceChangedEventArgs* args) -> HRESULT {
@@ -98,7 +106,7 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
           .Get(),
       nullptr);
 
-  pImpl_->webview_->add_NewWindowRequested(
+  pImpl_->webview->add_NewWindowRequested(
       Callback<ICoreWebView2NewWindowRequestedEventHandler>(
           [=](ICoreWebView2* sender, ICoreWebView2NewWindowRequestedEventArgs* args) -> HRESULT {
             wil::unique_cotaskmem_string uri;
@@ -125,6 +133,22 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
                     }
                 };
                 )");
+
+  if (options.getOption<bool>(WebviewOptions::kActivateNativeDragAndDrop)) {
+    injectScript(R"(
+      document.addEventListener('drop', function(e) {
+        window.chrome.webview.postMessageWithAdditionalObjects(
+          JSON.stringify({
+            type: 'deskgui-files-dropped',
+            x: e.clientX,
+            y: e.clientY
+          }),
+          e.dataTransfer.files
+        );
+      }, true);
+    )");
+  }
+
   enableAcceleratorKeys(false);
   show(true);
 }
@@ -137,9 +161,9 @@ void Webview::enableDevTools(bool state) {
   }
 
   wil::com_ptr<ICoreWebView2Settings> settings;
-  pImpl_->webview_->get_Settings(&settings);
+  pImpl_->webview->get_Settings(&settings);
   settings->put_AreDevToolsEnabled(state);
-  pImpl_->webview_->Reload();
+  pImpl_->webview->Reload();
 }
 
 void Webview::enableContextMenu(bool state) {
@@ -148,9 +172,9 @@ void Webview::enableContextMenu(bool state) {
   }
 
   wil::com_ptr<ICoreWebView2Settings> settings;
-  pImpl_->webview_->get_Settings(&settings);
+  pImpl_->webview->get_Settings(&settings);
   settings->put_AreDefaultContextMenusEnabled(state);
-  pImpl_->webview_->Reload();
+  pImpl_->webview->Reload();
 }
 
 void Webview::enableZoom(bool state) {
@@ -159,9 +183,9 @@ void Webview::enableZoom(bool state) {
   }
 
   wil::com_ptr<ICoreWebView2Settings> settings;
-  pImpl_->webview_->get_Settings(&settings);
+  pImpl_->webview->get_Settings(&settings);
   settings->put_IsZoomControlEnabled(state);
-  pImpl_->webview_->Reload();
+  pImpl_->webview->Reload();
 }
 
 void Webview::enableAcceleratorKeys(bool state) {
@@ -170,16 +194,15 @@ void Webview::enableAcceleratorKeys(bool state) {
   }
 
   if (state) {
-    if (pImpl_->acceleratorKeysToken_) {
-      pImpl_->webviewController_->remove_AcceleratorKeyPressed(
-          pImpl_->acceleratorKeysToken_.value());
-      pImpl_->acceleratorKeysToken_.reset();
+    if (pImpl_->acceleratorKeysToken) {
+      pImpl_->webviewController->remove_AcceleratorKeyPressed(pImpl_->acceleratorKeysToken.value());
+      pImpl_->acceleratorKeysToken.reset();
     }
   } else {
-    if (!pImpl_->acceleratorKeysToken_) {
-      pImpl_->acceleratorKeysToken_ = EventRegistrationToken();
+    if (!pImpl_->acceleratorKeysToken) {
+      pImpl_->acceleratorKeysToken = EventRegistrationToken();
 
-      pImpl_->webviewController_->add_AcceleratorKeyPressed(
+      pImpl_->webviewController->add_AcceleratorKeyPressed(
           Callback<ICoreWebView2AcceleratorKeyPressedEventHandler>(
               [this](ICoreWebView2Controller* sender,
                      ICoreWebView2AcceleratorKeyPressedEventArgs* args) -> HRESULT {
@@ -191,7 +214,7 @@ void Webview::enableAcceleratorKeys(bool state) {
                 return S_OK;
               })
               .Get(),
-          &pImpl_->acceleratorKeysToken_.value());
+          &pImpl_->acceleratorKeysToken.value());
     }
   }
 }
@@ -200,8 +223,8 @@ void Webview::resize(const ViewSize& size) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([size, this] { resize(size); });
   }
-  if (pImpl_->webviewController_) {
-    pImpl_->webviewController_->put_Bounds(
+  if (pImpl_->webviewController) {
+    pImpl_->webviewController->put_Bounds(
         RECT{0, 0, static_cast<LONG>(size.first), static_cast<LONG>(size.second)});
   }
 }
@@ -210,10 +233,10 @@ void Webview::setPosition(const ViewRect& rect) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([this, rect] { setPosition(rect); });
   }
-  if (pImpl_->webviewController_) {
-    pImpl_->webviewController_->put_Bounds(
-        RECT{static_cast<LONG>(rect.L), static_cast<LONG>(rect.T), static_cast<LONG>(rect.R),
-             static_cast<LONG>(rect.B)});
+  if (pImpl_->webviewController) {
+    pImpl_->webviewController->put_Bounds(RECT{static_cast<LONG>(rect.L), static_cast<LONG>(rect.T),
+                                               static_cast<LONG>(rect.R),
+                                               static_cast<LONG>(rect.B)});
   }
 }
 
@@ -221,8 +244,8 @@ void Webview::show(bool state) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([this, state] { show(state); });
   }
-  if (pImpl_->webviewController_) {
-    pImpl_->webviewController_->put_IsVisible(static_cast<BOOL>(state));
+  if (pImpl_->webviewController) {
+    pImpl_->webviewController->put_IsVisible(static_cast<BOOL>(state));
   }
 }
 
@@ -231,7 +254,7 @@ void Webview::navigate(const std::string& url) {
     return appHandler_->runOnMainThread([this, url] { navigate(url); });
   }
 
-  pImpl_->webview_->Navigate(s2ws(url).c_str());
+  pImpl_->webview->Navigate(s2ws(url).c_str());
 }
 
 void Webview::loadFile(const std::string& path) {
@@ -239,7 +262,7 @@ void Webview::loadFile(const std::string& path) {
     return appHandler_->runOnMainThread([this, path] { loadFile(path); });
   }
   std::string filePath = "file://" + path;
-  pImpl_->webview_->Navigate(s2ws(filePath).c_str());
+  pImpl_->webview->Navigate(s2ws(filePath).c_str());
 }
 
 void Webview::loadHTMLString(const std::string& html) {
@@ -247,7 +270,7 @@ void Webview::loadHTMLString(const std::string& html) {
     return appHandler_->runOnMainThread([this, html] { loadHTMLString(html); });
   }
 
-  pImpl_->webview_->NavigateToString(s2ws(html).c_str());
+  pImpl_->webview->NavigateToString(s2ws(html).c_str());
 }
 
 void Webview::loadResources(Resources&& resources) {
@@ -258,13 +281,13 @@ void Webview::loadResources(Resources&& resources) {
 
   resources_ = std::move(resources);
 
-  if (!pImpl_->webResourceRequestedToken_) {
-    pImpl_->webResourceRequestedToken_ = EventRegistrationToken();
+  if (!pImpl_->webResourceRequestedToken) {
+    pImpl_->webResourceRequestedToken = EventRegistrationToken();
 
-    pImpl_->webview_->AddWebResourceRequestedFilter((Webview::kWOrigin + L"*").c_str(),
-                                                    COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
+    pImpl_->webview->AddWebResourceRequestedFilter((Webview::kWOrigin + L"*").c_str(),
+                                                   COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
 
-    pImpl_->webview_->add_WebResourceRequested(
+    pImpl_->webview->add_WebResourceRequested(
         Callback<ICoreWebView2WebResourceRequestedEventHandler>(
             [=](ICoreWebView2* sender,
                 ICoreWebView2WebResourceRequestedEventArgs* args) -> HRESULT {
@@ -291,7 +314,7 @@ void Webview::loadResources(Resources&& resources) {
                                      });
 
               if (it != resources_.end()) {
-                auto webview2 = pImpl_->webview_.try_query<ICoreWebView2_2>();
+                auto webview2 = pImpl_->webview.try_query<ICoreWebView2_2>();
                 if (webview2) {
                   wil::com_ptr<ICoreWebView2Environment> env;
                   webview2->get_Environment(&env);
@@ -316,7 +339,7 @@ void Webview::loadResources(Resources&& resources) {
               return S_OK;
             })
             .Get(),
-        &pImpl_->webResourceRequestedToken_.value());
+        &pImpl_->webResourceRequestedToken.value());
   }
 }
 
@@ -334,11 +357,11 @@ void Webview::clearResources() {
 
   resources_.clear();
 
-  if (pImpl_->webResourceRequestedToken_) {
-    pImpl_->webview_->remove_WebResourceRequested(pImpl_->webResourceRequestedToken_.value());
-    pImpl_->webview_->RemoveWebResourceRequestedFilter((Webview::kWOrigin + L"*").c_str(),
-                                                       COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
-    pImpl_->webResourceRequestedToken_.reset();
+  if (pImpl_->webResourceRequestedToken) {
+    pImpl_->webview->remove_WebResourceRequested(pImpl_->webResourceRequestedToken.value());
+    pImpl_->webview->RemoveWebResourceRequestedFilter((Webview::kWOrigin + L"*").c_str(),
+                                                      COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
+    pImpl_->webResourceRequestedToken.reset();
   }
 }
 
@@ -348,7 +371,7 @@ void Webview::clearResources() {
   }
 
   wil::unique_cotaskmem_string url;
-  pImpl_->webview_->get_Source(&url);
+  pImpl_->webview->get_Source(&url);
   return ws2s(url.get());
 }
 
@@ -357,12 +380,12 @@ void Webview::injectScript(const std::string& script) {
     return appHandler_->runOnMainThread([this, script] { injectScript(script); });
   }
 
-  pImpl_->webview_->AddScriptToExecuteOnDocumentCreated(s2ws(script).c_str(), nullptr);
+  pImpl_->webview->AddScriptToExecuteOnDocumentCreated(s2ws(script).c_str(), nullptr);
 }
 
 void Webview::executeScript(const std::string& script) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([this, script] { executeScript(script); });
   }
-  pImpl_->webview_->ExecuteScript(s2ws(script).c_str(), nullptr);
+  pImpl_->webview->ExecuteScript(s2ws(script).c_str(), nullptr);
 }

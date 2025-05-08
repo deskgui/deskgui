@@ -8,10 +8,12 @@
 #include <system_error>
 
 #include "app_handler_windows.h"
+#include "utils/strings.h"
 #include "window_windows_impl.h"
 
-using namespace deskgui;
 
+using namespace deskgui;
+using namespace deskgui::utils;
 Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWindow)
     : name_(name), pImpl_{std::make_unique<Impl>()}, appHandler_(appHandler) {
   SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
@@ -20,19 +22,19 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
     pImpl_->registerWindowClass();
 
     pImpl_->windowHandle = CreateWindowEx(0,                    // Optional window styles.
-                                    CLASS_NAME,           // Window class
-                                    L"deskgui window",    // Window text
-                                    WS_OVERLAPPEDWINDOW,  // Window style
+                                          CLASS_NAME,           // Window class
+                                          L"deskgui window",    // Window text
+                                          WS_OVERLAPPEDWINDOW,  // Window style
 
-                                    // Size and position
-                                    kDefaultWindowRect.L, kDefaultWindowRect.T,
-                                    kDefaultWindowRect.R - kDefaultWindowRect.L,
-                                    kDefaultWindowRect.B - kDefaultWindowRect.T,
+                                          // Size and position
+                                          kDefaultWindowRect.L, kDefaultWindowRect.T,
+                                          kDefaultWindowRect.R - kDefaultWindowRect.L,
+                                          kDefaultWindowRect.B - kDefaultWindowRect.T,
 
-                                    nullptr,                  // Parent window
-                                    nullptr,                  // Menu
-                                    Window::Impl::hInstance,  // Instance handle
-                                    this                      // Additional application data
+                                          nullptr,                  // Parent window
+                                          nullptr,                  // Menu
+                                          Window::Impl::hInstance,  // Instance handle
+                                          this                      // Additional application data
     );
 
     if (!pImpl_->windowHandle) {
@@ -41,7 +43,8 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
   } else {
     isExternalWindow_ = true;
     pImpl_->windowHandle = static_cast<HWND>(nativeWindow);
-    SetWindowSubclass(pImpl_->windowHandle, &Impl::subclassProc, 1, reinterpret_cast<DWORD_PTR>(this));
+    SetWindowSubclass(pImpl_->windowHandle, &Impl::subclassProc, 1,
+                      reinterpret_cast<DWORD_PTR>(this));
   }
 
   setMonitorScaleFactor(pImpl_->computeDpiScale(pImpl_->windowHandle));
@@ -50,9 +53,9 @@ Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWind
 Window::~Window() {
   if (IsWindow(pImpl_->windowHandle)) {
     if (!isExternalWindow_) {
-        DestroyWindow(pImpl_->windowHandle);
+      DestroyWindow(pImpl_->windowHandle);
     } else {
-        RemoveWindowSubclass(pImpl_->windowHandle, &Impl::subclassProc, 1);
+      RemoveWindowSubclass(pImpl_->windowHandle, &Impl::subclassProc, 1);
     }
     pImpl_->windowHandle = nullptr;
   }
@@ -90,8 +93,8 @@ void Window::setSize(const ViewSize& size, PixelsType type) {
 
   int windowWidth = windowRect.right - windowRect.left;
   int windowHeight = windowRect.bottom - windowRect.top;
-  SetWindowPos(pImpl_->windowHandle, nullptr, windowRect.left, windowRect.top, windowWidth, windowHeight,
-               SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE | SWP_FRAMECHANGED);
+  SetWindowPos(pImpl_->windowHandle, nullptr, windowRect.left, windowRect.top, windowWidth,
+               windowHeight, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE | SWP_FRAMECHANGED);
 }
 
 [[nodiscard]] ViewSize Window::getSize(PixelsType type) const {
@@ -301,21 +304,22 @@ void Window::center() {
                SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 }
 
-void Window::enable(bool state){
+void Window::enable(bool state) {
   if (!appHandler_->isMainThread()) {
     return appHandler_->runOnMainThread([this, state]() { enable(state); });
   }
 
   EnableWindow(pImpl_->windowHandle, state ? TRUE : FALSE);
 
-  if(state) {
+  if (state) {
     SetForegroundWindow(pImpl_->windowHandle);
   }
 }
 
 void Window::setBackgroundColor(int red, int green, int blue) {
   if (!appHandler_->isMainThread()) {
-    return appHandler_->runOnMainThread([this, red, green, blue]() { setBackgroundColor(red, green, blue); });
+    return appHandler_->runOnMainThread(
+        [this, red, green, blue]() { setBackgroundColor(red, green, blue); });
   }
   pImpl_->backgroundColor_ = RGB(red, green, blue);
   InvalidateRect(pImpl_->windowHandle, nullptr, TRUE);

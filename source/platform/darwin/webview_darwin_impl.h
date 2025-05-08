@@ -7,10 +7,12 @@
 
 #pragma once
 
+#include <WebKit/WebKit.h>
+
+#include <vector>
+
 #include "deskgui/webview.h"
 
-#include <WebKit/WebKit.h>
-#include <vector>
 
 /**
  * CustomNavigationDelegate handles all WebKit navigation and message events.
@@ -20,9 +22,11 @@
  * - URL scheme handling
  * - Context menu state
  */
-@interface CustomNavigationDelegate : NSObject <WKNavigationDelegate, WKScriptMessageHandler, WKURLSchemeHandler>
-@property (nonatomic) BOOL contextMenuEnabled;
-- (instancetype)initWithWebview:(deskgui::Webview*)webview resources:(std::vector<deskgui::Resource>*)resources;
+@interface CustomNavigationDelegate
+    : NSObject <WKNavigationDelegate, WKScriptMessageHandler, WKURLSchemeHandler>
+@property(nonatomic) BOOL contextMenuEnabled;
+- (instancetype)initWithWebview:(deskgui::Webview*)webview
+                      resources:(std::vector<deskgui::Resource>*)resources;
 @end
 
 /**
@@ -47,20 +51,20 @@
 
 namespace deskgui {
 
-extern NSString* const kSchemeUri;
-extern NSString* const kScriptMessageCallback;
+  extern NSString* const kSchemeUri;
+  extern NSString* const kScriptMessageCallback;
 
-/**
- * Implementation details for the Webview class.
- * Contains the native WebKit components used by the Webview.
- */
-struct Webview::Impl {
-    WKWebView* webview = nullptr;        ///< The WebKit web view instance
-    WKUserContentController* controller = nullptr;  ///< Controller for user content and scripts
-    CustomUIDelegate* uiDelegate = nullptr;  ///< UI delegate for the webview
+  /**
+   * Implementation details for the Webview class.
+   * Contains the native WebKit components used by the Webview.
+   */
+  struct Webview::Impl {
+    WKWebView* webview = nullptr;                     ///< The WebKit web view instance
+    WKUserContentController* controller = nullptr;    ///< Controller for user content and scripts
+    CustomUIDelegate* uiDelegate = nullptr;           ///< UI delegate for the webview
     WKWebViewConfiguration* configuration = nullptr;  ///< WebView configuration
-    WKPreferences* preferences = nullptr;  ///< WebView preferences
+    WKPreferences* preferences = nullptr;             ///< WebView preferences
     CustomNavigationDelegate* navigationDelegate = nullptr;  ///< Navigation delegate
-};
+  };
 
-} // namespace deskgui
+}  // namespace deskgui

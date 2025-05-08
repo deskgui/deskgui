@@ -23,11 +23,11 @@ int main() {
   window->setBackgroundColor(249, 203, 103);
 
   WebviewOptions options;
-  options.setOption(deskgui::WebviewOptions::kActivateNativeDragAndDrop, true);
+  options.setOption(WebviewOptions::kActivateNativeDragAndDrop, true);
   auto webview = window->createWebview("webview", options);
     
   webview->loadResources(getCompiledResources("drag_and_drop_example_web_resources"));
-  webview->serveResource("index.html");
+  webview->loadFile("C:\\Work\\deskgui\\examples\\drag_and_drop_example\\assets\\index.html");
   webview->enableContextMenu(true);
   webview->enableDevTools(true);
 
