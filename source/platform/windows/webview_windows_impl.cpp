@@ -145,6 +145,10 @@ bool Webview::Impl::handleDragAndDrop(ICoreWebView2WebMessageReceivedEventArgs* 
   wil::unique_cotaskmem_string message;
   event->TryGetWebMessageAsString(&message);
 
+  if (!message) {
+    return false;
+  }
+
   rapidjson::Document doc;
   doc.Parse(ws2s(message.get()).c_str());
 
