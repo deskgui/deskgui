@@ -136,7 +136,7 @@ Webview::Webview(const std::string& name, AppHandler* appHandler, void* window,
 
   if (options.getOption<bool>(WebviewOptions::kActivateNativeDragAndDrop)) {
     injectScript(R"(
-      document.addEventListener('drop', function(e) {
+      window.addEventListener('drop', function(e) {
         window.chrome.webview.postMessageWithAdditionalObjects(
           JSON.stringify({
             type: 'deskgui-files-dropped',
