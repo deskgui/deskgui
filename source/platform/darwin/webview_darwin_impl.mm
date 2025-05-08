@@ -175,7 +175,7 @@ NSString* const deskgui::kScriptMessageCallback = @"deskgui_callback";
   return NSDragOperationCopy;
 }
 
-- (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
+- (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
   NSPasteboard* pasteboard = [sender draggingPasteboard];
   NSArray<NSURL*>* fileURLs =
       [pasteboard readObjectsForClasses:@[ [NSURL class] ]
@@ -186,7 +186,7 @@ NSString* const deskgui::kScriptMessageCallback = @"deskgui_callback";
   }
 
   // Convert NSArray of NSURLs to std::vector of paths
-  std::vector<std::string> paths;
+  std::vector<std::filesystem::path> paths;
   for (NSURL* fileURL in fileURLs) {
     paths.push_back([fileURL.path UTF8String]);
   }

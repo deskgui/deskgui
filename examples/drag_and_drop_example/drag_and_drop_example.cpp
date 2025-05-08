@@ -27,7 +27,7 @@ int main() {
   auto webview = window->createWebview("webview", options);
     
   webview->loadResources(getCompiledResources("drag_and_drop_example_web_resources"));
-  webview->loadFile("C:\\Work\\deskgui\\examples\\drag_and_drop_example\\assets\\index.html");
+  webview->serveResource("index.html");
   webview->enableContextMenu(true);
   webview->enableDevTools(true);
 

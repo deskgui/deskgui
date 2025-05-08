@@ -14,7 +14,10 @@
 #include <vector>
 
 #include "file.h"
+
+#ifdef WIN32
 #include "strings.h"
+#endif
 
 namespace deskgui::utils {
 
