@@ -5,11 +5,12 @@
  * MIT License
  */
 
+#include "webview_windows_impl.h"
+
 #include <rapidjson/document.h>
 
+#include "js/drop.h"
 #include "utils/strings.h"
-#include "utils/webview_js.h"
-#include "webview_windows_impl.h"
 
 using namespace deskgui;
 using namespace deskgui::utils;
@@ -180,7 +181,7 @@ bool Webview::Impl::handleDragAndDrop(ICoreWebView2WebMessageReceivedEventArgs* 
       }
     }
 
-    webview->ExecuteScript(s2ws(createDropEventJS(paths, x, y)).c_str(), nullptr);
+    webview->ExecuteScript(s2ws(js::createDropEvent(paths, x, y)).c_str(), nullptr);
     return true;
   }
 

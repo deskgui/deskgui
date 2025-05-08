@@ -5,12 +5,10 @@
  * MIT License
  */
 
-#include "utils/webview_js.h"
+#include "js/drop.h"
 #include "webview_darwin_impl.h"
 
-
 using namespace deskgui;
-using namespace deskgui::utils;
 
 // Global constants
 NSString* const deskgui::kSchemeUri = [NSString stringWithUTF8String:Webview::kProtocol];
@@ -195,7 +193,7 @@ NSString* const deskgui::kScriptMessageCallback = @"deskgui_callback";
   NSPoint dropPoint = [self convertPoint:[sender draggingLocation] fromView:nil];
 
   // Use the utility function to generate the JavaScript code
-  std::string jsCode = createDropEventJS(paths, dropPoint.x, dropPoint.y);
+  std::string jsCode = js::createDropEvent(paths, dropPoint.x, dropPoint.y);
   [self evaluateJavaScript:[NSString stringWithUTF8String:jsCode.c_str()] completionHandler:nil];
 
   return YES;

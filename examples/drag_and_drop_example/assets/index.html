@@ -193,7 +193,7 @@
       });
 
       // Handle native drop
-      dropArea.addEventListener('nativedrop', (e) => {
+      dropArea.addEventListener('deskgui:drop', (e) => {
         const paths = e.detail.paths;
         const invalidFiles = paths.filter(path => !isValidFileType(path));
         
