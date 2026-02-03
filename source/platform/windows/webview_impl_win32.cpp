@@ -27,7 +27,7 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
     throw std::invalid_argument("Window is a nullptr");
   }
 
-  if (!platform_->createWebviewInstance(name_, hwnd, options)) {
+  if (!platform_->createWebviewInstance(appHandler_->getName(), hwnd, options)) {
     throw std::exception("Cannot initialize webview");
   }
 

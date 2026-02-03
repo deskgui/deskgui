@@ -39,6 +39,13 @@ namespace deskgui {
     virtual bool isMainThread() const = 0;
 
     /**
+     * @brief Gets the name of the application.
+     *
+     * @return The name of the application.
+     */
+    [[nodiscard]] virtual std::string_view getName() const = 0;
+
+    /**
      * @brief Posts a task to the main thread's message loop in a thread-safe manner.
      *
      * This method posts a task function to be executed on the main thread's message loop.

@@ -19,9 +19,9 @@ using Impl = Window::Impl;
 
 Impl::Impl(const std::string& name, AppHandler* appHandler, void* nativeWindow)
     : platform_(std::make_unique<Impl::Platform>()), name_(name), appHandler_(appHandler) {
-  SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
 
   if (nativeWindow == nullptr) {
+    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
     platform_->registerWindowClass();
 
     platform_->windowHandle = CreateWindowEx(0,                    // Optional window styles.

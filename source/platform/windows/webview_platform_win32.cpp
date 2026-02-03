@@ -11,11 +11,44 @@
 #include "utils/strings.h"
 #include "webview_platform_win32.h"
 
-
 using namespace deskgui;
 using namespace deskgui::utils;
 
 using Platform = Webview::Impl::Platform;
+
+namespace detail {
+  bool isProcessRunning(DWORD processId) {
+    HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
+    if (process == nullptr) {
+      return false;
+    }
+    DWORD exitCode;
+    bool running = GetExitCodeProcess(process, &exitCode) && exitCode == STILL_ACTIVE;
+    CloseHandle(process);
+    return running;
+  }
+
+  void cleanupOrphanWebviewFolders(const std::filesystem::path& basePath) {
+    if (!std::filesystem::exists(basePath)) {
+      return;
+    }
+
+    for (const auto& entry : std::filesystem::directory_iterator(basePath)) {
+      if (!entry.is_directory()) {
+        continue;
+      }
+
+      try {
+        DWORD pid = std::stoul(entry.path().filename().string());
+        if (!isProcessRunning(pid)) {
+          std::filesystem::remove_all(entry.path());
+        }
+      } catch (...) {
+        // Folder name is not a valid PID, skip it
+      }
+    }
+  }
+}  // namespace detail
 
 bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
                                      const WebviewOptions& options) {
@@ -62,15 +95,31 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
       = {customSchemeRegistration.Get()};
   environmentOptions->SetCustomSchemeRegistrations(registrations.size(), registrations.data());
 
-  std::wstring temp;
-  wil::GetEnvironmentVariableW(L"TEMP", temp);
-  temp += L"\\" + std::wstring(appName.begin(), appName.end());
+  environmentOptions->put_AllowSingleSignOnUsingOSPrimaryAccount(FALSE);
+  environmentOptions->put_IsCustomCrashReportingEnabled(FALSE);
+
+  // Check if exclusive user data folder is disabled (default is true/exclusive)
+  const bool exclusiveUserDataFolder
+      = !options.hasOption(WebviewOptions::kExclusiveUserDataFolder)
+        || options.getOption<bool>(WebviewOptions::kExclusiveUserDataFolder);
+
+  wchar_t tempPath[MAX_PATH];
+  GetTempPathW(MAX_PATH, tempPath);
+
+  std::filesystem::path userDataFolder = tempPath;
+  userDataFolder /= std::wstring(appName.begin(), appName.end());
+
+  if (!exclusiveUserDataFolder) {
+    environmentOptions->put_ExclusiveUserDataFolderAccess(FALSE);
+    detail::cleanupOrphanWebviewFolders(userDataFolder);
+    userDataFolder /= std::to_wstring(GetCurrentProcessId());
+  }
 
   std::atomic_flag flag = ATOMIC_FLAG_INIT;
   flag.test_and_set();
 
   CreateCoreWebView2EnvironmentWithOptions(
-      nullptr, temp.c_str(), environmentOptions.Get(),
+      nullptr, userDataFolder.wstring().c_str(), environmentOptions.Get(),
       Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
           [this, hWnd, &flag]([[maybe_unused]] HRESULT result,
                               ICoreWebView2Environment* environment) {
