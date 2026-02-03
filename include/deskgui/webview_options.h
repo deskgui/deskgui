@@ -71,6 +71,9 @@ namespace deskgui {
     static constexpr auto kDisableGpu = "disable-gpu";
     static constexpr auto kAllowFileAccessFromFiles = "allow-file-access-from-files";
     static constexpr auto kActivateNativeDragAndDrop = "activate-native-drag-and-drop";
+    // When false, allows multiple app instances to share the same user data folder.
+    // Defaults to true (exclusive access).
+    static constexpr auto kExclusiveUserDataFolder = "exclusive-user-data-folder";
   };
 
 }  // namespace deskgui

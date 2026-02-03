@@ -72,7 +72,7 @@ namespace deskgui {
      *
      * @return The name of the application.
      */
-    [[nodiscard]] std::string_view getName() const;
+    [[nodiscard]] std::string_view getName() const override;
 
     /**
      * @brief Starts the main event loop of the application.
