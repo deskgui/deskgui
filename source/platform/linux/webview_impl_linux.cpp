@@ -26,7 +26,18 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
   platform_->container = GTK_FIXED(gtk_fixed_new());
   gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(platform_->container));
 
-  platform_->webview = WEBKIT_WEB_VIEW(webkit_web_view_new());
+  // Configure ephemeral session (private mode)
+  const bool ephemeralSession = options.hasOption(WebviewOptions::kEphemeralSession)
+      && options.getOption<bool>(WebviewOptions::kEphemeralSession);
+
+  if (ephemeralSession) {
+    WebKitWebContext* ephemeralContext = webkit_web_context_new_ephemeral();
+    platform_->webview = WEBKIT_WEB_VIEW(webkit_web_view_new_with_context(ephemeralContext));
+    g_object_unref(ephemeralContext);
+  } else {
+    platform_->webview = WEBKIT_WEB_VIEW(webkit_web_view_new());
+  }
+
   if (!platform_->webview) {
     throw std::runtime_error("Failed to create webview.");
   }

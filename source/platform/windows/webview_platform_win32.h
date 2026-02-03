@@ -41,6 +41,8 @@ namespace deskgui {
 
     std::optional<EventRegistrationToken> webResourceRequestedToken;
     std::optional<EventRegistrationToken> acceleratorKeysToken;
+
+    bool ephemeralSession_ = false;
   };
 
 }  // namespace deskgui

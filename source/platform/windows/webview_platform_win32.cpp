@@ -95,13 +95,25 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
       = {customSchemeRegistration.Get()};
   environmentOptions->SetCustomSchemeRegistrations(registrations.size(), registrations.data());
 
-  environmentOptions->put_AllowSingleSignOnUsingOSPrimaryAccount(FALSE);
-  environmentOptions->put_IsCustomCrashReportingEnabled(FALSE);
+  // Configure SSO option (defaults to false)
+  const bool allowSSO
+      = options.hasOption(WebviewOptions::kWebview2AllowSingleSignOnUsingOSPrimaryAccount)
+        && options.getOption<bool>(WebviewOptions::kWebview2AllowSingleSignOnUsingOSPrimaryAccount);
+  environmentOptions->put_AllowSingleSignOnUsingOSPrimaryAccount(allowSSO ? TRUE : FALSE);
 
-  // Check if exclusive user data folder is disabled (default is true/exclusive)
-  const bool exclusiveUserDataFolder
-      = !options.hasOption(WebviewOptions::kExclusiveUserDataFolder)
-        || options.getOption<bool>(WebviewOptions::kExclusiveUserDataFolder);
+  // Configure crash reporting (defaults to false)
+  const bool customCrashReporting
+      = options.hasOption(WebviewOptions::kWebview2IsCustomCrashReportingEnabled)
+        && options.getOption<bool>(WebviewOptions::kWebview2IsCustomCrashReportingEnabled);
+  environmentOptions->put_IsCustomCrashReportingEnabled(customCrashReporting ? TRUE : FALSE);
+
+  // Configure exclusive data folder access (defaults to true)
+  const bool exclusiveAccess
+      = !options.hasOption(WebviewOptions::kWebview2ExclusiveDataFolderAccess)
+        || options.getOption<bool>(WebviewOptions::kWebview2ExclusiveDataFolderAccess);
+  if (!exclusiveAccess) {
+    environmentOptions->put_ExclusiveUserDataFolderAccess(FALSE);
+  }
 
   wchar_t tempPath[MAX_PATH];
   GetTempPathW(MAX_PATH, tempPath);
@@ -109,11 +121,24 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
   std::filesystem::path userDataFolder = tempPath;
   userDataFolder /= std::wstring(appName.begin(), appName.end());
 
-  if (!exclusiveUserDataFolder) {
-    environmentOptions->put_ExclusiveUserDataFolderAccess(FALSE);
-    detail::cleanupOrphanWebviewFolders(userDataFolder);
+  // Configure process isolation and cleanup
+  const bool isolateByProcess
+      = options.hasOption(WebviewOptions::kWebview2IsolateUserDataByProcess)
+        && options.getOption<bool>(WebviewOptions::kWebview2IsolateUserDataByProcess);
+
+  if (isolateByProcess) {
+    const bool cleanupOrphans
+        = options.hasOption(WebviewOptions::kWebview2CleanupOrphanedUserDataOnCreate)
+          && options.getOption<bool>(WebviewOptions::kWebview2CleanupOrphanedUserDataOnCreate);
+    if (cleanupOrphans) {
+      detail::cleanupOrphanWebviewFolders(userDataFolder);
+    }
     userDataFolder /= std::to_wstring(GetCurrentProcessId());
   }
+
+  // Store ephemeral option to pass to controller creation
+  ephemeralSession_ = options.hasOption(WebviewOptions::kEphemeralSession)
+                      && options.getOption<bool>(WebviewOptions::kEphemeralSession);
 
   std::atomic_flag flag = ATOMIC_FLAG_INIT;
   flag.test_and_set();
@@ -166,6 +191,27 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
 
 HRESULT Platform::onCreateEnvironmentCompleted(ICoreWebView2Environment* environment, HWND hWnd,
                                                std::atomic_flag& flag) {
+  // Query for ICoreWebView2Environment10 to access CreateCoreWebView2ControllerOptions
+  wil::com_ptr<ICoreWebView2Environment10> environment10;
+  if (ephemeralSession_ && SUCCEEDED(environment->QueryInterface(IID_PPV_ARGS(&environment10)))) {
+    wil::com_ptr<ICoreWebView2ControllerOptions> controllerOptions;
+    if (SUCCEEDED(environment10->CreateCoreWebView2ControllerOptions(&controllerOptions))) {
+      controllerOptions->put_IsInPrivateModeEnabled(TRUE);
+
+      environment10->CreateCoreWebView2ControllerWithOptions(
+          hWnd, controllerOptions.get(),
+          Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
+              [this, &flag]([[maybe_unused]] HRESULT result, ICoreWebView2Controller* controller) {
+                this->onCreateCoreWebView2ControllerCompleted(controller);
+                flag.clear();
+                return S_OK;
+              })
+              .Get());
+      return S_OK;
+    }
+  }
+
+  // Fallback to standard controller creation (no private mode)
   environment->CreateCoreWebView2Controller(
       hWnd,
       Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(

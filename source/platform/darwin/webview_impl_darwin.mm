@@ -21,6 +21,14 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
   platform_->controller = [[WKUserContentController alloc] init];
 
   platform_->configuration = [[WKWebViewConfiguration alloc] init];
+
+  // Configure ephemeral session (private mode)
+  const bool ephemeralSession = options.hasOption(WebviewOptions::kEphemeralSession)
+                                && options.getOption<bool>(WebviewOptions::kEphemeralSession);
+  if (ephemeralSession) {
+    platform_->configuration.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
+  }
+
   platform_->configuration.userContentController = platform_->controller;
 
   platform_->preferences = [[WKPreferences alloc] init];
