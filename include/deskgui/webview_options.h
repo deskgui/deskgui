@@ -99,6 +99,13 @@ namespace deskgui {
     /// - macOS: Uses WKWebsiteDataStore.nonPersistentDataStore
     /// - Linux: Uses webkit_web_context_new_ephemeral
     static constexpr auto kEphemeralSession = "ephemeral-session";
+
+    /// When true, creates the webview asynchronously without blocking the UI thread.
+    /// Use isReady() or onReady() to check/wait for initialization.
+    /// - Windows: Returns immediately, WebView2 initializes in background
+    /// - macOS/Linux: No effect (initialization is always synchronous)
+    /// Defaults to false (synchronous/blocking).
+    static constexpr auto kAsyncCreation = "async-creation";
   };
 
 }  // namespace deskgui

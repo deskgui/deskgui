@@ -32,13 +32,14 @@ namespace deskgui {
     /**
      * @brief Constructs a Webview object.
      *
-     * @param AppHandler Pointer to the application handler, which ensures thread safety for Webview
+     * @param name The name of the webview.
+     * @param appHandler Pointer to the application handler, which ensures thread safety for Webview
      * operations.
-     *
      * @param window Pointer to the native window.
      *               - On Windows, it should be of type HWND.
      *               - On MacOS, it should be of type NSWindow.
      *               - On Linux, it should be of type GtkWindow.
+     * @param options Webview options.
      */
     Webview(const std::string& name, AppHandler* appHandler, void* window,
             const WebviewOptions& options);
@@ -58,6 +59,27 @@ namespace deskgui {
      * @return A constant reference to the name of the webview.
      */
     [[nodiscard]] std::string getName() const;
+
+    /**
+     * @brief Checks if the webview is ready for use.
+     *
+     * On Windows, webview creation is asynchronous. This method returns true
+     * when the WebView2 environment and controller are fully initialized.
+     * On macOS and Linux, this typically returns true immediately.
+     *
+     * @return true if the webview is ready, false otherwise.
+     */
+    [[nodiscard]] bool isReady() const;
+
+    /**
+     * @brief Attaches a callback to be invoked when the webview becomes ready.
+     *
+     * If the webview is already ready, the callback is invoked immediately.
+     * Otherwise, the callback will be invoked asynchronously when initialization completes.
+     *
+     * @param callback The callback function to invoke when ready.
+     */
+    void onReady(std::function<void()> callback);
 
     /**
      * @brief Enables or disables the developer tools.

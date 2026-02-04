@@ -5,11 +5,12 @@
  * MIT License
  */
 
+#include "webview_platform_win32.h"
+
 #include <rapidjson/document.h>
 
 #include "js/drop.h"
 #include "utils/strings.h"
-#include "webview_platform_win32.h"
 
 using namespace deskgui;
 using namespace deskgui::utils;
@@ -58,6 +59,10 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
   if (FAILED(hr)) {
     return false;
   }
+
+  // Read async mode from options
+  asyncMode_ = options.hasOption(WebviewOptions::kAsyncCreation)
+               && options.getOption<bool>(WebviewOptions::kAsyncCreation);
 
   ComPtr environmentOptions = Make<CoreWebView2EnvironmentOptions>();
 
@@ -152,45 +157,29 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
           })
           .Get());
 
+  // Async mode: return immediately, initialization completes via callback
+  if (asyncMode_) {
+    return true;
+  }
+
+  // Sync mode: block until environment is ready
   MSG msg = {};
   while (flag.test_and_set() && GetMessage(&msg, nullptr, 0, 0)) {
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
 
-  if (!webviewController || !webview) {
-    return false;
-  }
-
-  wil::com_ptr<ICoreWebView2Settings> settings;
-  webview->get_Settings(&settings);
-
-  // Enable web messages and scripts
-  settings->put_IsWebMessageEnabled(true);
-  settings->put_IsScriptEnabled(true);
-
-  // Disable default settings
-  settings->put_AreDevToolsEnabled(false);
-  settings->put_AreDefaultContextMenusEnabled(false);
-  settings->put_IsZoomControlEnabled(false);
-  settings->put_AreDefaultScriptDialogsEnabled(false);
-  settings->put_AreHostObjectsAllowed(false);
-  settings->put_IsStatusBarEnabled(false);
-
-  if (auto settings3 = settings.try_query<ICoreWebView2Settings3>(); settings3) {
-    settings3->put_AreBrowserAcceleratorKeysEnabled(false);
-  }
-
-  if (auto settings4 = settings.try_query<ICoreWebView2Settings4>(); settings4) {
-    settings4->put_IsGeneralAutofillEnabled(false);
-    settings4->put_IsPasswordAutosaveEnabled(false);
-  }
-
-  return true;
+  return webviewController && webview;
 }
 
 HRESULT Platform::onCreateEnvironmentCompleted(ICoreWebView2Environment* environment, HWND hWnd,
                                                std::atomic_flag& flag) {
+  // Check if environment creation failed
+  if (!environment) {
+    flag.clear();
+    return E_FAIL;
+  }
+
   // Query for ICoreWebView2Environment10 to access CreateCoreWebView2ControllerOptions
   wil::com_ptr<ICoreWebView2Environment10> environment10;
   if (ephemeralSession_ && SUCCEEDED(environment->QueryInterface(IID_PPV_ARGS(&environment10)))) {
@@ -228,6 +217,11 @@ void Platform::onCreateCoreWebView2ControllerCompleted(ICoreWebView2Controller* 
   if (controller) {
     webviewController = controller;
     webviewController->get_CoreWebView2(&webview);
+  }
+
+  // For async mode: complete initialization and notify when controller is ready
+  if (asyncMode_ && webviewImpl_ && webview && webviewController) {
+    webviewImpl_->initialize(options_);
   }
 }
 

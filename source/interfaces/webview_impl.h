@@ -10,6 +10,7 @@
 #include <deskgui/event_bus.h>
 #include <deskgui/webview.h>
 
+#include <mutex>
 #include <unordered_map>
 
 namespace deskgui {
@@ -22,6 +23,8 @@ namespace deskgui {
                   const WebviewOptions& options);
     ~Impl();
 
+    void initialize(const WebviewOptions& options);
+
     /**
      * Constants defining the protocol, host, and origin URL of the URL scheme
      * used in the webview to serve custom resources.
@@ -31,6 +34,10 @@ namespace deskgui {
     inline static const std::wstring kWOrigin = L"webview://localhost/";
 
     [[nodiscard]] inline std::string getName() const { return name_; }
+
+    [[nodiscard]] bool isReady() const;
+    void onReady(std::function<void()> callback);
+    void notifyReady();  // Internal: called when initialization completes
 
     // Settings
     void enableDevTools(bool state);
@@ -70,6 +77,9 @@ namespace deskgui {
     AppHandler* appHandler_{nullptr};
     Resources resources_;
     EventBus events_;
+    mutable std::mutex readyMutex_;
+    bool isReady_ = false;
+    std::vector<std::function<void()>> readyCallbacks_;
   };
 
 }  // namespace deskgui

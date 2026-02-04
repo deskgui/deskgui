@@ -50,10 +50,22 @@ namespace deskgui {
     ~Window();
 
     /**
-     * Create a new Webview with the specified name and position it with the given rect.
+     * Create a new Webview with the specified name.
+     *
+     * By default, this method blocks until the webview is fully initialized.
+     *
+     * On Windows, you can enable asynchronous creation by setting the
+     * WebviewOptions::kAsyncCreation option to true. In async mode, this method
+     * returns immediately and the webview initializes in the background.
+     * Use webview->isReady() to check if initialization is complete, or
+     * webview->onReady() to attach a callback that fires when ready.
+     *
+     * On macOS and Linux, creation is always synchronous, but onReady() is
+     * still supported for consistent cross-platform code.
      *
      * @param name The name of the Webview.
-     * @return A weak pointer to the created Webview.
+     * @param options Webview options.
+     * @return A pointer to the created Webview.
      */
     Webview* createWebview(const std::string& name, const WebviewOptions& options = {});
 

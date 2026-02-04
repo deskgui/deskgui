@@ -22,6 +22,47 @@ Webview::~Webview() = default;
 
 std::string Webview::getName() const { return utils::dispatch<&Impl::getName>(impl_); }
 
+bool Webview::isReady() const { return utils::dispatch<&Impl::isReady>(impl_); }
+
+void Webview::onReady(std::function<void()> callback) {
+  utils::dispatch<&Impl::onReady>(impl_, callback);
+}
+
+bool Webview::Impl::isReady() const {
+  std::lock_guard<std::mutex> lock(readyMutex_);
+  return isReady_;
+}
+
+void Webview::Impl::onReady(std::function<void()> callback) {
+  bool shouldCallNow = false;
+  {
+    std::lock_guard<std::mutex> lock(readyMutex_);
+    if (isReady_) {
+      shouldCallNow = true;
+    } else {
+      readyCallbacks_.push_back(std::move(callback));
+    }
+  }
+  if (shouldCallNow) {
+    callback();
+  }
+}
+
+void Webview::Impl::notifyReady() {
+  std::vector<std::function<void()>> callbacksToInvoke;
+  {
+    std::lock_guard<std::mutex> lock(readyMutex_);
+    if (isReady_) {
+      return;
+    }
+    isReady_ = true;
+    callbacksToInvoke = std::move(readyCallbacks_);
+  }
+  for (auto& callback : callbacksToInvoke) {
+    callback();
+  }
+}
+
 void Webview::Impl::addCallback(const std::string& key, MessageCallback callback) {
   callbacks_.try_emplace(key, callback);
 }
