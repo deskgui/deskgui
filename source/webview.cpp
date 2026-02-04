@@ -22,11 +22,53 @@ Webview::~Webview() = default;
 
 std::string Webview::getName() const { return utils::dispatch<&Impl::getName>(impl_); }
 
+bool Webview::isReady() const { return utils::dispatch<&Impl::isReady>(impl_); }
+
+void Webview::onReady(std::function<void()> callback) {
+  utils::dispatch<&Impl::onReady>(impl_, callback);
+}
+
+bool Webview::Impl::isReady() const {
+  std::lock_guard<std::mutex> lock(readyMutex_);
+  return isReady_;
+}
+
+void Webview::Impl::onReady(std::function<void()> callback) {
+  bool shouldCallNow = false;
+  {
+    std::lock_guard<std::mutex> lock(readyMutex_);
+    if (isReady_) {
+      shouldCallNow = true;
+    } else {
+      readyCallbacks_.push_back(std::move(callback));
+    }
+  }
+  if (shouldCallNow) {
+    callback();
+  }
+}
+
+void Webview::Impl::notifyReady() {
+  std::vector<std::function<void()>> callbacksToInvoke;
+  {
+    std::lock_guard<std::mutex> lock(readyMutex_);
+    if (isReady_) {
+      return;
+    }
+    isReady_ = true;
+    callbacksToInvoke = std::move(readyCallbacks_);
+  }
+  for (auto& callback : callbacksToInvoke) {
+    callback();
+  }
+}
+
 void Webview::Impl::addCallback(const std::string& key, MessageCallback callback) {
   callbacks_.try_emplace(key, callback);
 }
 
 void Webview::addCallback(const std::string& key, MessageCallback callback) {
+  if (!isReady()) return;
   auto script = "window['" + key + "'] = function(payload) { const key = '" + key + "';" +
                 R"(
                     window.webview.postMessage({
@@ -43,6 +85,7 @@ void Webview::addCallback(const std::string& key, MessageCallback callback) {
 void Webview::Impl::removeCallback(const std::string& key) { callbacks_.erase(key); }
 
 void Webview::removeCallback(const std::string& key) {
+  if (!isReady()) return;
   auto script = "delete window['" + key + "']";
   utils::dispatch<&Impl::removeCallback>(impl_, key);
   injectScript(script);
@@ -50,6 +93,7 @@ void Webview::removeCallback(const std::string& key) {
 }
 
 void Webview::postMessage(const std::string& message) {
+  if (!isReady()) return;
   executeScript("window.webview.onMessage('" + message + "');");
 }
 
@@ -76,53 +120,85 @@ void Webview::Impl::onMessage(const std::string& message) {
 }
 
 // Settings methods
-void Webview::enableDevTools(bool state) { utils::dispatch<&Impl::enableDevTools>(impl_, state); }
+void Webview::enableDevTools(bool state) {
+  if (!isReady()) return;
+  utils::dispatch<&Impl::enableDevTools>(impl_, state);
+}
 
 void Webview::enableContextMenu(bool state) {
+  if (!isReady()) return;
   utils::dispatch<&Impl::enableContextMenu>(impl_, state);
 }
 
-void Webview::enableZoom(bool state) { utils::dispatch<&Impl::enableZoom>(impl_, state); }
+void Webview::enableZoom(bool state) {
+  if (!isReady()) return;
+  utils::dispatch<&Impl::enableZoom>(impl_, state);
+}
 
 void Webview::enableAcceleratorKeys(bool state) {
+  if (!isReady()) return;
   utils::dispatch<&Impl::enableAcceleratorKeys>(impl_, state);
 }
 
 // View methods
 void Webview::setPosition(const ViewRect& rect) {
+  if (!isReady()) return;
   utils::dispatch<&Impl::setPosition>(impl_, rect);
 }
 
-void Webview::show(bool state) { utils::dispatch<&Impl::show>(impl_, state); }
+void Webview::show(bool state) {
+  if (!isReady()) return;
+  utils::dispatch<&Impl::show>(impl_, state);
+}
 
-void Webview::resize(const ViewSize& size) { utils::dispatch<&Impl::resize>(impl_, size); }
+void Webview::resize(const ViewSize& size) {
+  if (!isReady()) return;
+  utils::dispatch<&Impl::resize>(impl_, size);
+}
 
 // Content methods
-void Webview::navigate(const std::string& url) { utils::dispatch<&Impl::navigate>(impl_, url); }
+void Webview::navigate(const std::string& url) {
+  if (!isReady()) return;
+  utils::dispatch<&Impl::navigate>(impl_, url);
+}
 
-void Webview::loadFile(const std::string& path) { utils::dispatch<&Impl::loadFile>(impl_, path); }
+void Webview::loadFile(const std::string& path) {
+  if (!isReady()) return;
+  utils::dispatch<&Impl::loadFile>(impl_, path);
+}
 
 void Webview::loadHTMLString(const std::string& html) {
+  if (!isReady()) return;
   utils::dispatch<&Impl::loadHTMLString>(impl_, html);
 }
 
 void Webview::loadResources(Resources&& resources) {
+  if (!isReady()) return;
   utils::dispatch<&Impl::loadResources>(impl_, std::move(resources));
 }
 
 void Webview::serveResource(const std::string& resourceUrl) {
+  if (!isReady()) return;
   utils::dispatch<&Impl::serveResource>(impl_, resourceUrl);
 }
 
-void Webview::clearResources() { utils::dispatch<&Impl::clearResources>(impl_); }
+void Webview::clearResources() {
+  if (!isReady()) return;
+  utils::dispatch<&Impl::clearResources>(impl_);
+}
 
-std::string Webview::getUrl() { return utils::dispatch<&Impl::getUrl>(impl_); }
+std::string Webview::getUrl() {
+  if (!isReady()) return {};
+  return utils::dispatch<&Impl::getUrl>(impl_);
+}
 
 // Functionality methods
 void Webview::injectScript(const std::string& script) {
+  if (!isReady()) return;
   utils::dispatch<&Impl::injectScript>(impl_, script);
 }
 
 void Webview::executeScript(const std::string& script) {
+  if (!isReady()) return;
   utils::dispatch<&Impl::executeScript>(impl_, script);
 }

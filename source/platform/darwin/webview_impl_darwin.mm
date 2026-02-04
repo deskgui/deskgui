@@ -12,20 +12,37 @@ using namespace deskgui;
 using Impl = Webview::Impl;
 
 Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
-           [[maybe_unused]] const WebviewOptions& options)
+           const WebviewOptions& options)
     : platform_(std::make_unique<Impl::Platform>()), appHandler_(appHandler), name_(name) {
   if (window == nullptr) {
     throw std::invalid_argument("Window is a nullptr");
   }
 
-  platform_->controller = [[WKUserContentController alloc] init];
+  platform_->parentWindow = window;
+  initialize(options);
+}
 
+Impl::~Impl() {
+  [platform_->webview removeFromSuperview];
+  [platform_->controller removeScriptMessageHandlerForName:kScriptMessageCallback];
+}
+
+void Impl::initialize(const WebviewOptions& options) {
+  // Create WKWebView configuration
+  platform_->controller = [[WKUserContentController alloc] init];
   platform_->configuration = [[WKWebViewConfiguration alloc] init];
   platform_->configuration.userContentController = platform_->controller;
-
   platform_->preferences = [[WKPreferences alloc] init];
   platform_->configuration.preferences = platform_->preferences;
 
+  // Configure ephemeral session (private mode)
+  const bool ephemeralSession = options.hasOption(WebviewOptions::kEphemeralSession)
+                                && options.getOption<bool>(WebviewOptions::kEphemeralSession);
+  if (ephemeralSession) {
+    platform_->configuration.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
+  }
+
+  // Set up navigation delegate and custom scheme handler
   platform_->navigationDelegate = [[CustomNavigationDelegate alloc] initWithWebview:this
                                                                           resources:&resources_];
   [platform_->controller addScriptMessageHandler:platform_->navigationDelegate
@@ -33,6 +50,7 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
   [platform_->configuration setURLSchemeHandler:platform_->navigationDelegate
                                    forURLScheme:kSchemeUri];
 
+  // Register custom scheme as secure (private API)
   auto pool = platform_->configuration.processPool;
   SEL selector = NSSelectorFromString(@"_registerURLSchemeAsSecure:");
   if ([pool respondsToSelector:selector]) {
@@ -47,23 +65,25 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
     }
   }
 
+  // Create webview
   const auto nativeDragAndDrop
       = options.getOption<bool>(WebviewOptions::kActivateNativeDragAndDrop);
   platform_->webview = [[CustomWebview alloc] initWithFrame:CGRectZero
                                               configuration:platform_->configuration
                                           enableDragAndDrop:nativeDragAndDrop];
-  [platform_->webview setNavigationDelegate:platform_->navigationDelegate];
 
-  // Set up UI delegate
+  // Add to parent window
+  [platform_->webview setFrame:[(__bridge id)platform_->parentWindow frame]];
+  [platform_->webview setValue:@NO forKey:@"drawsBackground"];
+  platform_->webview.translatesAutoresizingMaskIntoConstraints = YES;
+  [(__bridge id)platform_->parentWindow addSubview:platform_->webview];
+
+  // Set up delegates
+  [platform_->webview setNavigationDelegate:platform_->navigationDelegate];
   platform_->uiDelegate = [[CustomUIDelegate alloc] initWithWebview:this];
   [platform_->webview setUIDelegate:platform_->uiDelegate];
 
-  [platform_->webview setFrame:[(__bridge id)window frame]];
-  [platform_->webview setValue:@NO forKey:@"drawsBackground"];
-
-  platform_->webview.translatesAutoresizingMaskIntoConstraints = YES;
-  [(__bridge id)window addSubview:platform_->webview];
-
+  // Inject JS bridge
   injectScript(R"(
               window.webview = {
                   async postMessage(message)
@@ -72,12 +92,8 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
                   }
               };
               )");
-  show(true);
-}
 
-Impl::~Impl() {
-  [platform_->webview removeFromSuperview];
-  [platform_->controller removeScriptMessageHandlerForName:kScriptMessageCallback];
+  notifyReady();
 }
 
 void Impl::enableDevTools(bool state) {

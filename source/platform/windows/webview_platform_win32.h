@@ -9,6 +9,7 @@
 
 #include <WebView2.h>
 #include <WebView2EnvironmentOptions.h>
+#include <deskgui/types.h>
 #include <wil/com.h>
 #include <wil/stl.h>
 #include <wil/win32_helpers.h>
@@ -16,6 +17,7 @@
 
 #include <atomic>
 #include <cstdlib>
+#include <functional>
 #include <optional>
 #include <utility>
 
@@ -41,6 +43,11 @@ namespace deskgui {
 
     std::optional<EventRegistrationToken> webResourceRequestedToken;
     std::optional<EventRegistrationToken> acceleratorKeysToken;
+
+    bool ephemeralSession_ = false;
+    bool asyncMode_ = false;
+    Webview::Impl* webviewImpl_ = nullptr;
+    WebviewOptions options_;
   };
 
 }  // namespace deskgui

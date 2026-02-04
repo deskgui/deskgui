@@ -18,47 +18,67 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
     throw std::invalid_argument("Window is a nullptr");
   }
 
+  // Create GTK container hierarchy
   GtkWindow* parentWindow = GTK_WINDOW(window);
-
   GtkScrolledWindow* scrolledWindow = GTK_SCROLLED_WINDOW(gtk_scrolled_window_new(NULL, NULL));
   gtk_container_add(GTK_CONTAINER(parentWindow), GTK_WIDGET(scrolledWindow));
-
   platform_->container = GTK_FIXED(gtk_fixed_new());
   gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(platform_->container));
 
-  platform_->webview = WEBKIT_WEB_VIEW(webkit_web_view_new());
+  initialize(options);
+}
+
+Impl::~Impl() {
+  platform_->container = nullptr;
+  platform_->webview = nullptr;
+}
+
+void Impl::initialize(const WebviewOptions& options) {
+  // Create webview (with ephemeral context if requested)
+  const bool ephemeralSession = options.hasOption(WebviewOptions::kEphemeralSession)
+      && options.getOption<bool>(WebviewOptions::kEphemeralSession);
+  if (ephemeralSession) {
+    WebKitWebContext* ephemeralContext = webkit_web_context_new_ephemeral();
+    platform_->webview = WEBKIT_WEB_VIEW(webkit_web_view_new_with_context(ephemeralContext));
+    g_object_unref(ephemeralContext);
+  } else {
+    platform_->webview = WEBKIT_WEB_VIEW(webkit_web_view_new());
+  }
+
   if (!platform_->webview) {
     throw std::runtime_error("Failed to create webview.");
   }
-  int x, y;
-  gtk_window_get_position(GTK_WINDOW(window), &x, &y);
 
+  // Set initial position and size
   gtk_fixed_put(platform_->container, GTK_WIDGET(platform_->webview), kDefaultWindowRect.L,
                 kDefaultWindowRect.T);
-
   gtk_widget_set_size_request(GTK_WIDGET(platform_->webview), kDefaultWindowRect.R,
                               kDefaultWindowRect.B);
-
   gtk_widget_grab_focus(GTK_WIDGET(platform_->webview));
 
+  // Configure settings
   WebKitSettings* settings = webkit_web_view_get_settings(platform_->webview);
   webkit_settings_set_enable_javascript(settings, TRUE);
 
+  // Connect navigation signals
   g_signal_connect(platform_->webview, "load-changed", G_CALLBACK(platform_->onLoadChanged), this);
   g_signal_connect(platform_->webview, "decide-policy", G_CALLBACK(platform_->onNavigationRequest),
                    this);
 
+  // Set up message handler for JS communication
   WebKitUserContentManager* contentManager
       = webkit_web_view_get_user_content_manager(platform_->webview);
   webkit_user_content_manager_register_script_message_handler(contentManager, "messageHandler");
   g_signal_connect(contentManager, "script-message-received::messageHandler",
                    G_CALLBACK(platform_->onScriptMessageReceived), this);
 
+  // Register custom URI scheme for local resources
   WebKitWebContext* context = webkit_web_view_get_context(platform_->webview);
   webkit_web_context_register_uri_scheme(
       context, Impl::kProtocol, (WebKitURISchemeRequestCallback)platform_->onCustomSchemeRequest,
       this, NULL);
 
+  // Inject JS bridge
   injectScript(R"(
                 window.webview = {
                     async postMessage(message) 
@@ -67,12 +87,8 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
                     }
                 };
                 )");
-  show(true);
-}
 
-Impl::~Impl() {
-  platform_->container = nullptr;
-  platform_->webview = nullptr;
+  notifyReady();
 }
 
 void Impl::enableDevTools(bool state) {

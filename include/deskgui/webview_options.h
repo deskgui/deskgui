@@ -71,9 +71,41 @@ namespace deskgui {
     static constexpr auto kDisableGpu = "disable-gpu";
     static constexpr auto kAllowFileAccessFromFiles = "allow-file-access-from-files";
     static constexpr auto kActivateNativeDragAndDrop = "activate-native-drag-and-drop";
-    // When false, allows multiple app instances to share the same user data folder.
-    // Defaults to true (exclusive access).
-    static constexpr auto kExclusiveUserDataFolder = "exclusive-user-data-folder";
+
+    // WebView2-specific options (Windows only)
+    /// When false, allows multiple app instances to share the same user data folder.
+    /// Defaults to true (exclusive access). Windows only.
+    static constexpr auto kWebview2ExclusiveDataFolderAccess = "webview2-exclusive-data-folder-access";
+
+    /// When true, allows single sign-on using the OS primary account.
+    /// Defaults to false. Windows only.
+    static constexpr auto kWebview2AllowSingleSignOnUsingOSPrimaryAccount = "webview2-allow-sso";
+
+    /// When true, enables custom crash reporting in WebView2.
+    /// Defaults to false. Windows only.
+    static constexpr auto kWebview2IsCustomCrashReportingEnabled = "webview2-custom-crash-reporting";
+
+    /// When true, isolates user data by appending the process ID to the data folder path.
+    /// Defaults to false. Windows only.
+    static constexpr auto kWebview2IsolateUserDataByProcess = "webview2-isolate-user-data-by-process";
+
+    /// When true, cleans up orphaned user data folders from terminated processes on creation.
+    /// Only applies when kWebview2IsolateUserDataByProcess is enabled. Windows only.
+    static constexpr auto kWebview2CleanupOrphanedUserDataOnCreate = "webview2-cleanup-orphaned-user-data";
+
+    // Cross-platform options
+    /// When true, enables ephemeral/private browsing mode. Data is not persisted.
+    /// - Windows: Uses WebView2 InPrivate mode via ICoreWebView2ControllerOptions
+    /// - macOS: Uses WKWebsiteDataStore.nonPersistentDataStore
+    /// - Linux: Uses webkit_web_context_new_ephemeral
+    static constexpr auto kEphemeralSession = "ephemeral-session";
+
+    /// When true, creates the webview asynchronously without blocking the UI thread.
+    /// Use isReady() or onReady() to check/wait for initialization.
+    /// - Windows: Returns immediately, WebView2 initializes in background
+    /// - macOS/Linux: No effect (initialization is always synchronous)
+    /// Defaults to false (synchronous/blocking).
+    static constexpr auto kAsyncCreation = "async-creation";
   };
 
 }  // namespace deskgui

@@ -27,11 +27,44 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
     throw std::invalid_argument("Window is a nullptr");
   }
 
+  platform_->webviewImpl_ = this;
+  platform_->options_ = options;
+
   if (!platform_->createWebviewInstance(appHandler_->getName(), hwnd, options)) {
     throw std::exception("Cannot initialize webview");
   }
 
-  // Message received event
+  if (!platform_->asyncMode_) {
+    initialize(options);
+  }
+}
+
+void Impl::initialize(const WebviewOptions& options) {
+  if (isReady_ || !platform_->webview || !platform_->webviewController) {
+    return;
+  }
+
+  // Configure WebView2 settings
+  wil::com_ptr<ICoreWebView2Settings> settings;
+  platform_->webview->get_Settings(&settings);
+  settings->put_IsWebMessageEnabled(true);
+  settings->put_IsScriptEnabled(true);
+  settings->put_AreDevToolsEnabled(false);
+  settings->put_AreDefaultContextMenusEnabled(false);
+  settings->put_IsZoomControlEnabled(false);
+  settings->put_AreDefaultScriptDialogsEnabled(false);
+  settings->put_AreHostObjectsAllowed(false);
+  settings->put_IsStatusBarEnabled(false);
+
+  if (auto settings3 = settings.try_query<ICoreWebView2Settings3>(); settings3) {
+    settings3->put_AreBrowserAcceleratorKeysEnabled(false);
+  }
+  if (auto settings4 = settings.try_query<ICoreWebView2Settings4>(); settings4) {
+    settings4->put_IsGeneralAutofillEnabled(false);
+    settings4->put_IsPasswordAutosaveEnabled(false);
+  }
+
+  // Set up message handler for JS communication
   platform_->webview->add_WebMessageReceived(
       Callback<ICoreWebView2WebMessageReceivedEventHandler>(
           [this]([[maybe_unused]] ICoreWebView2* sender,
@@ -39,7 +72,6 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
             if (platform_->handleDragAndDrop(args)) {
               return S_OK;
             }
-
             wil::unique_cotaskmem_string message;
             args->get_WebMessageAsJson(&message);
             onMessage(ws2s(message.get()));
@@ -48,7 +80,7 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
           .Get(),
       nullptr);
 
-  // Handle the navigation starting event
+  // Connect navigation event handlers
   platform_->webview->add_NavigationStarting(
       Callback<ICoreWebView2NavigationStartingEventHandler>(
           [=](ICoreWebView2* sender, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT {
@@ -56,7 +88,6 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
             args->get_Uri(&uri);
             event::WebviewNavigationStarting event(ws2s(uri.get()));
             events_.emit(event);
-
             if (event.isCancelled()) {
               sender->Stop();
             }
@@ -65,16 +96,13 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
           .Get(),
       nullptr);
 
-  // Handle frame navigation starting event (if needed)
   platform_->webview->add_FrameNavigationStarting(
       Callback<ICoreWebView2NavigationStartingEventHandler>(
           [=](ICoreWebView2* sender, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT {
             wil::unique_cotaskmem_string uri;
             args->get_Uri(&uri);
-
             event::WebviewFrameNavigationStarting event(ws2s(uri.get()));
             events_.emit(event);
-
             if (event.isCancelled()) {
               sender->Stop();
             }
@@ -83,7 +111,6 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
           .Get(),
       nullptr);
 
-  // Handle navigation completed event
   platform_->webview->add_NavigationCompleted(
       Callback<ICoreWebView2NavigationCompletedEventHandler>(
           [=]([[maybe_unused]] ICoreWebView2* sender,
@@ -96,7 +123,6 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
           .Get(),
       nullptr);
 
-  // Handle source changed event
   platform_->webview->add_SourceChanged(
       Callback<ICoreWebView2SourceChangedEventHandler>(
           [=]([[maybe_unused]] ICoreWebView2* sender,
@@ -112,20 +138,17 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
           [=](ICoreWebView2* sender, ICoreWebView2NewWindowRequestedEventArgs* args) -> HRESULT {
             wil::unique_cotaskmem_string uri;
             args->get_Uri(&uri);
-
             event::WebviewWindowRequested event(ws2s(uri.get()));
             events_.emit(event);
-
             if (event.isCancelled()) {
               args->put_Handled(true);
-              return S_OK;
             }
-
             return S_OK;
           })
           .Get(),
       nullptr);
 
+  // Inject JS bridge
   injectScript(R"(
                 window.webview = {
                     async postMessage(message) 
@@ -135,12 +158,13 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
                 };
                 )");
 
+  // Optional: inject drag-and-drop handler
   if (options.getOption<bool>(WebviewOptions::kActivateNativeDragAndDrop)) {
     injectScript(js::kWindowsDropListener);
   }
 
   enableAcceleratorKeys(false);
-  show(true);
+  notifyReady();
 }
 
 Impl::~Impl() = default;
@@ -149,21 +173,18 @@ void Impl::enableDevTools(bool state) {
   wil::com_ptr<ICoreWebView2Settings> settings;
   platform_->webview->get_Settings(&settings);
   settings->put_AreDevToolsEnabled(state);
-  platform_->webview->Reload();
 }
 
 void Impl::enableContextMenu(bool state) {
   wil::com_ptr<ICoreWebView2Settings> settings;
   platform_->webview->get_Settings(&settings);
   settings->put_AreDefaultContextMenusEnabled(state);
-  platform_->webview->Reload();
 }
 
 void Impl::enableZoom(bool state) {
   wil::com_ptr<ICoreWebView2Settings> settings;
   platform_->webview->get_Settings(&settings);
   settings->put_IsZoomControlEnabled(state);
-  platform_->webview->Reload();
 }
 
 void Impl::enableAcceleratorKeys(bool state) {

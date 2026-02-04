@@ -66,6 +66,7 @@ namespace deskgui {
    * Contains the native WebKit components used by the Webview.
    */
   struct Webview::Impl::Platform {
+    void* parentWindow = nullptr;                     ///< Parent window (NSView*)
     WKWebView* webview = nullptr;                     ///< The WebKit web view instance
     WKUserContentController* controller = nullptr;    ///< Controller for user content and scripts
     CustomUIDelegate* uiDelegate = nullptr;           ///< UI delegate for the webview
