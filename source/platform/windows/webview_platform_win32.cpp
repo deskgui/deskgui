@@ -121,18 +121,10 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
     environmentOptions->put_ExclusiveUserDataFolderAccess(FALSE);
   }
 
-  // Use LocalAppData instead of Temp - more reliable in packaged apps (MSIX/UWP hosts)
-  std::filesystem::path userDataFolder;
-  PWSTR localAppDataPath = nullptr;
-  if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &localAppDataPath))) {
-    userDataFolder = localAppDataPath;
-    CoTaskMemFree(localAppDataPath);
-  } else {
-    wchar_t tempPath[MAX_PATH];
-    GetTempPathW(MAX_PATH, tempPath);
-    userDataFolder = tempPath;
-  }
-  userDataFolder /= std::wstring(appName.begin(), appName.end());
+  std::wstring temp;
+  wil::GetEnvironmentVariableW(L"TEMP", temp);
+  std::filesystem::path userDataFolder = temp;
+  userDataFolder /= s2ws(std::string(appName));
 
   // Configure process isolation and cleanup
   const bool isolateByProcess
