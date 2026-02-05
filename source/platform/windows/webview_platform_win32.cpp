@@ -7,6 +7,7 @@
 
 #include "webview_platform_win32.h"
 
+#include <Shlobj.h>
 #include <rapidjson/document.h>
 
 #include "js/drop.h"
@@ -120,11 +121,10 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
     environmentOptions->put_ExclusiveUserDataFolderAccess(FALSE);
   }
 
-  wchar_t tempPath[MAX_PATH];
-  GetTempPathW(MAX_PATH, tempPath);
-
-  std::filesystem::path userDataFolder = tempPath;
-  userDataFolder /= std::wstring(appName.begin(), appName.end());
+  std::wstring temp;
+  wil::GetEnvironmentVariableW(L"TEMP", temp);
+  std::filesystem::path userDataFolder = temp;
+  userDataFolder /= s2ws(std::string(appName));
 
   // Configure process isolation and cleanup
   const bool isolateByProcess
