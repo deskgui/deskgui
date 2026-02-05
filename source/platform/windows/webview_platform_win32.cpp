@@ -7,6 +7,7 @@
 
 #include "webview_platform_win32.h"
 
+#include <Shlobj.h>
 #include <rapidjson/document.h>
 
 #include "js/drop.h"
@@ -120,10 +121,17 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
     environmentOptions->put_ExclusiveUserDataFolderAccess(FALSE);
   }
 
-  wchar_t tempPath[MAX_PATH];
-  GetTempPathW(MAX_PATH, tempPath);
-
-  std::filesystem::path userDataFolder = tempPath;
+  // Use LocalAppData instead of Temp - more reliable in packaged apps (MSIX/UWP hosts)
+  std::filesystem::path userDataFolder;
+  PWSTR localAppDataPath = nullptr;
+  if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &localAppDataPath))) {
+    userDataFolder = localAppDataPath;
+    CoTaskMemFree(localAppDataPath);
+  } else {
+    wchar_t tempPath[MAX_PATH];
+    GetTempPathW(MAX_PATH, tempPath);
+    userDataFolder = tempPath;
+  }
   userDataFolder /= std::wstring(appName.begin(), appName.end());
 
   // Configure process isolation and cleanup
