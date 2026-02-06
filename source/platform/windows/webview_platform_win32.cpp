@@ -8,6 +8,7 @@
 #include "webview_platform_win32.h"
 
 #include <Shlobj.h>
+#include <filesystem>
 #include <rapidjson/document.h>
 
 #include "js/drop.h"
@@ -17,40 +18,6 @@ using namespace deskgui;
 using namespace deskgui::utils;
 
 using Platform = Webview::Impl::Platform;
-
-namespace detail {
-  bool isProcessRunning(DWORD processId) {
-    HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
-    if (process == nullptr) {
-      return false;
-    }
-    DWORD exitCode;
-    bool running = GetExitCodeProcess(process, &exitCode) && exitCode == STILL_ACTIVE;
-    CloseHandle(process);
-    return running;
-  }
-
-  void cleanupOrphanWebviewFolders(const std::filesystem::path& basePath) {
-    if (!std::filesystem::exists(basePath)) {
-      return;
-    }
-
-    for (const auto& entry : std::filesystem::directory_iterator(basePath)) {
-      if (!entry.is_directory()) {
-        continue;
-      }
-
-      try {
-        DWORD pid = std::stoul(entry.path().filename().string());
-        if (!isProcessRunning(pid)) {
-          std::filesystem::remove_all(entry.path());
-        }
-      } catch (...) {
-        // Folder name is not a valid PID, skip it
-      }
-    }
-  }
-}  // namespace detail
 
 bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
                                      const WebviewOptions& options) {
@@ -121,24 +88,18 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
     environmentOptions->put_ExclusiveUserDataFolderAccess(FALSE);
   }
 
-  std::wstring temp;
-  wil::GetEnvironmentVariableW(L"TEMP", temp);
-  std::filesystem::path userDataFolder = temp;
-  userDataFolder /= s2ws(std::string(appName));
+  const std::string customUserDataFolder
+      = options.hasOption(WebviewOptions::kWebview2UserDataFolder)
+        ? options.getOption<std::string>(WebviewOptions::kWebview2UserDataFolder)
+        : std::string{};
 
-  // Configure process isolation and cleanup
-  const bool isolateByProcess
-      = options.hasOption(WebviewOptions::kWebview2IsolateUserDataByProcess)
-        && options.getOption<bool>(WebviewOptions::kWebview2IsolateUserDataByProcess);
-
-  if (isolateByProcess) {
-    const bool cleanupOrphans
-        = options.hasOption(WebviewOptions::kWebview2CleanupOrphanedUserDataOnCreate)
-          && options.getOption<bool>(WebviewOptions::kWebview2CleanupOrphanedUserDataOnCreate);
-    if (cleanupOrphans) {
-      detail::cleanupOrphanWebviewFolders(userDataFolder);
-    }
-    userDataFolder /= std::to_wstring(GetCurrentProcessId());
+  std::filesystem::path userDataFolder;
+  if (!customUserDataFolder.empty()) {
+    userDataFolder = customUserDataFolder;
+  } else {
+    std::wstring temp;
+    wil::GetEnvironmentVariableW(L"TEMP", temp);
+    userDataFolder = std::filesystem::path(temp) / std::string(appName);
   }
 
   // Store ephemeral option to pass to controller creation
@@ -149,7 +110,7 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
   flag.test_and_set();
 
   CreateCoreWebView2EnvironmentWithOptions(
-      nullptr, userDataFolder.wstring().c_str(), environmentOptions.Get(),
+      nullptr, userDataFolder.c_str(), environmentOptions.Get(),
       Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
           [this, hWnd, &flag]([[maybe_unused]] HRESULT result,
                               ICoreWebView2Environment* environment) {
