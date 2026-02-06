@@ -22,7 +22,7 @@ namespace deskgui {
    */
   class WebviewOptions {
   public:
-    using Option = std::variant<bool, int>;
+    using Option = std::variant<bool, int, std::string>;
 
     /**
      * @brief Set an option with the specified key and value.
@@ -73,6 +73,11 @@ namespace deskgui {
     static constexpr auto kActivateNativeDragAndDrop = "activate-native-drag-and-drop";
 
     // WebView2-specific options (Windows only)
+    /// The path to the user data folder.
+    /// Defaults to the system temp folder. Windows only.
+    static constexpr auto kWebview2UserDataFolder = "webview2-user-data-folder";
+    
+    // WebView2-specific options (Windows only)
     /// When false, allows multiple app instances to share the same user data folder.
     /// Defaults to true (exclusive access). Windows only.
     static constexpr auto kWebview2ExclusiveDataFolderAccess = "webview2-exclusive-data-folder-access";
@@ -84,14 +89,6 @@ namespace deskgui {
     /// When true, enables custom crash reporting in WebView2.
     /// Defaults to false. Windows only.
     static constexpr auto kWebview2IsCustomCrashReportingEnabled = "webview2-custom-crash-reporting";
-
-    /// When true, isolates user data by appending the process ID to the data folder path.
-    /// Defaults to false. Windows only.
-    static constexpr auto kWebview2IsolateUserDataByProcess = "webview2-isolate-user-data-by-process";
-
-    /// When true, cleans up orphaned user data folders from terminated processes on creation.
-    /// Only applies when kWebview2IsolateUserDataByProcess is enabled. Windows only.
-    static constexpr auto kWebview2CleanupOrphanedUserDataOnCreate = "webview2-cleanup-orphaned-user-data";
 
     // Cross-platform options
     /// When true, enables ephemeral/private browsing mode. Data is not persisted.
