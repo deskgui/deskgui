@@ -8,8 +8,9 @@
 #include "webview_platform_win32.h"
 
 #include <Shlobj.h>
-#include <filesystem>
 #include <rapidjson/document.h>
+
+#include <filesystem>
 
 #include "js/drop.h"
 #include "utils/strings.h"
@@ -90,8 +91,8 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
 
   const std::string customUserDataFolder
       = options.hasOption(WebviewOptions::kWebview2UserDataFolder)
-        ? options.getOption<std::string>(WebviewOptions::kWebview2UserDataFolder)
-        : std::string{};
+            ? options.getOption<std::string>(WebviewOptions::kWebview2UserDataFolder)
+            : std::string{};
 
   std::filesystem::path userDataFolder;
   if (!customUserDataFolder.empty()) {
@@ -106,15 +107,13 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
   ephemeralSession_ = options.hasOption(WebviewOptions::kEphemeralSession)
                       && options.getOption<bool>(WebviewOptions::kEphemeralSession);
 
-  std::atomic_flag flag = ATOMIC_FLAG_INIT;
-  flag.test_and_set();
+  creationFlag_.test_and_set();
 
   CreateCoreWebView2EnvironmentWithOptions(
       nullptr, userDataFolder.c_str(), environmentOptions.Get(),
       Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-          [this, hWnd, &flag]([[maybe_unused]] HRESULT result,
-                              ICoreWebView2Environment* environment) {
-            return this->onCreateEnvironmentCompleted(environment, hWnd, flag);
+          [this, hWnd]([[maybe_unused]] HRESULT result, ICoreWebView2Environment* environment) {
+            return this->onCreateEnvironmentCompleted(environment, hWnd);
           })
           .Get());
 
@@ -125,7 +124,7 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
 
   // Sync mode: block until environment is ready
   MSG msg = {};
-  while (flag.test_and_set() && GetMessage(&msg, nullptr, 0, 0)) {
+  while (creationFlag_.test_and_set() && GetMessage(&msg, nullptr, 0, 0)) {
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
@@ -133,11 +132,10 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
   return webviewController && webview;
 }
 
-HRESULT Platform::onCreateEnvironmentCompleted(ICoreWebView2Environment* environment, HWND hWnd,
-                                               std::atomic_flag& flag) {
+HRESULT Platform::onCreateEnvironmentCompleted(ICoreWebView2Environment* environment, HWND hWnd) {
   // Check if environment creation failed
   if (!environment) {
-    flag.clear();
+    creationFlag_.clear();
     return E_FAIL;
   }
 
@@ -151,9 +149,9 @@ HRESULT Platform::onCreateEnvironmentCompleted(ICoreWebView2Environment* environ
       environment10->CreateCoreWebView2ControllerWithOptions(
           hWnd, controllerOptions.get(),
           Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
-              [this, &flag]([[maybe_unused]] HRESULT result, ICoreWebView2Controller* controller) {
+              [this]([[maybe_unused]] HRESULT result, ICoreWebView2Controller* controller) {
                 this->onCreateCoreWebView2ControllerCompleted(controller);
-                flag.clear();
+                creationFlag_.clear();
                 return S_OK;
               })
               .Get());
@@ -163,14 +161,13 @@ HRESULT Platform::onCreateEnvironmentCompleted(ICoreWebView2Environment* environ
 
   // Fallback to standard controller creation (no private mode)
   environment->CreateCoreWebView2Controller(
-      hWnd,
-      Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
-          [this, &flag]([[maybe_unused]] HRESULT result, ICoreWebView2Controller* controller) {
-            this->onCreateCoreWebView2ControllerCompleted(controller);
-            flag.clear();
-            return S_OK;
-          })
-          .Get());
+      hWnd, Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
+                [this]([[maybe_unused]] HRESULT result, ICoreWebView2Controller* controller) {
+                  this->onCreateCoreWebView2ControllerCompleted(controller);
+                  creationFlag_.clear();
+                  return S_OK;
+                })
+                .Get());
   return S_OK;
 }
 
@@ -180,8 +177,7 @@ void Platform::onCreateCoreWebView2ControllerCompleted(ICoreWebView2Controller* 
     webviewController->get_CoreWebView2(&webview);
   }
 
-  // For async mode: complete initialization and notify when controller is ready
-  if (asyncMode_ && webviewImpl_ && webview && webviewController) {
+  if (webviewImpl_ && webview && webviewController) {
     webviewImpl_->initialize(options_);
   }
 }

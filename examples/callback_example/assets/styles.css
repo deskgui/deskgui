@@ -1,38 +1,32 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
+    padding: 0;
     font-family: 'Open Sans', sans-serif;
-    position: absolute;
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    display: table;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     user-select: none;
+    background-color: #e4cb35;
   }
   
   #content {
-    display: table-cell;
+    position: relative;
+    z-index: 1;
     text-align: center;
-    vertical-align: middle;
+    padding: 20px;
   }
   
-  #content:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 20vh;
-    background: rgba(245, 168, 2, 0.6);
-  }
-  
-  #content:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100vw;
-    height: 20vh;
-    background: rgba(243, 186, 29, 0.7);
+  #counter {
+    color: #ffffff;
+    font-size: 24px;
+    margin-bottom: 30px;
   }
   
   #result {
@@ -95,5 +89,6 @@ body {
   .hits {
     font-size: 2em;
     font-weight: bolder;
+    color: #4964db;
   }
   

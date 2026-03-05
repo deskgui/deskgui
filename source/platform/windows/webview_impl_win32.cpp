@@ -33,10 +33,6 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
   if (!platform_->createWebviewInstance(appHandler_->getName(), hwnd, options)) {
     throw std::exception("Cannot initialize webview");
   }
-
-  if (!platform_->asyncMode_) {
-    initialize(options);
-  }
 }
 
 void Impl::initialize(const WebviewOptions& options) {
@@ -164,6 +160,7 @@ void Impl::initialize(const WebviewOptions& options) {
   }
 
   enableAcceleratorKeys(false);
+  show(true);
   notifyReady();
 }
 

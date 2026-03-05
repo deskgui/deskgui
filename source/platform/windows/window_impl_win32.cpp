@@ -21,7 +21,7 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* nativeWindow)
     : platform_(std::make_unique<Impl::Platform>()), name_(name), appHandler_(appHandler) {
 
   if (nativeWindow == nullptr) {
-    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
+    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
     platform_->registerWindowClass();
 
     platform_->windowHandle = CreateWindowEx(0,                    // Optional window styles.
@@ -104,13 +104,13 @@ ViewSize Impl::getSize(PixelsType type) const {
 }
 
 void Impl::setMaxSize(const ViewSize& size, PixelsType type) {
-  ViewSize adjustedSize = size;
-  if (type == PixelsType::kLogical) {
-    adjustedSize.first *= monitorScaleFactor_;
-    adjustedSize.second *= monitorScaleFactor_;
+  ViewSize logicalSize = size;
+  if (type == PixelsType::kPhysical) {
+    logicalSize.first /= monitorScaleFactor_;
+    logicalSize.second /= monitorScaleFactor_;
   }
 
-  maxSize_ = adjustedSize;
+  maxSize_ = logicalSize;
   maxSizeDefined_ = true;
 
   LONG windowStyle = GetWindowLong(platform_->windowHandle, GWL_STYLE);
@@ -119,30 +119,28 @@ void Impl::setMaxSize(const ViewSize& size, PixelsType type) {
 }
 
 ViewSize Impl::getMaxSize(PixelsType type) const {
-  if (type == PixelsType::kLogical) {
-    return ViewSize{maxSize_.first / monitorScaleFactor_, maxSize_.second / monitorScaleFactor_};
-  } else {
-    return maxSize_;
+  if (type == PixelsType::kPhysical) {
+    return ViewSize{maxSize_.first * monitorScaleFactor_, maxSize_.second * monitorScaleFactor_};
   }
+  return maxSize_;
 }
 
 void Impl::setMinSize(const ViewSize& size, PixelsType type) {
-  ViewSize adjustedSize = size;
-  if (type == PixelsType::kLogical) {
-    adjustedSize.first *= monitorScaleFactor_;
-    adjustedSize.second *= monitorScaleFactor_;
+  ViewSize logicalSize = size;
+  if (type == PixelsType::kPhysical) {
+    logicalSize.first /= monitorScaleFactor_;
+    logicalSize.second /= monitorScaleFactor_;
   }
 
-  minSize_ = adjustedSize;
+  minSize_ = logicalSize;
   minSizeDefined_ = true;
 }
 
 ViewSize Impl::getMinSize(PixelsType type) const {
-  if (type == PixelsType::kLogical) {
-    return ViewSize{minSize_.first / monitorScaleFactor_, minSize_.second / monitorScaleFactor_};
-  } else {
-    return minSize_;
+  if (type == PixelsType::kPhysical) {
+    return ViewSize{minSize_.first * monitorScaleFactor_, minSize_.second * monitorScaleFactor_};
   }
+  return minSize_;
 }
 
 void Impl::setPosition(const ViewRect& position, PixelsType type) {
@@ -217,31 +215,19 @@ void Impl::center() {
   RECT windowRect;
   GetWindowRect(platform_->windowHandle, &windowRect);
 
-  // Calculate the window width and height
   int windowWidth = windowRect.right - windowRect.left;
   int windowHeight = windowRect.bottom - windowRect.top;
 
-  // Get the screen dimensions
-  int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-  int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+  // Get the work area of the monitor the window is currently on
+  HMONITOR monitor = MonitorFromWindow(platform_->windowHandle, MONITOR_DEFAULTTONEAREST);
+  MONITORINFO monitorInfo = {};
+  monitorInfo.cbSize = sizeof(monitorInfo);
+  GetMonitorInfo(monitor, &monitorInfo);
 
-  // Get the taskbar height
-  APPBARDATA appBarData;
-  appBarData.cbSize = sizeof(appBarData);
-  UINT taskbarHeight = 0;
-  if (SHAppBarMessage(ABM_GETTASKBARPOS, &appBarData)) {
-    taskbarHeight = appBarData.rc.bottom - appBarData.rc.top;
-  }
+  auto &workArea = monitorInfo.rcWork;
+  int xPos = workArea.left + (workArea.right - workArea.left - windowWidth) / 2;
+  int yPos = workArea.top + (workArea.bottom - workArea.top - windowHeight) / 2;
 
-  // Calculate the window position to center it, considering the taskbar
-  int yPos = screenHeight - windowHeight - taskbarHeight;
-  yPos = (yPos < 0) ? 0 : yPos;
-  yPos /= 2;
-
-  // Calculate the window position to center it, considering the taskbar
-  int xPos = (screenWidth - windowWidth) / 2;
-
-  // Set the new window position
   SetWindowPos(platform_->windowHandle, nullptr, xPos, yPos, 0, 0,
                SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 }

@@ -92,7 +92,8 @@ void Impl::initialize(const WebviewOptions& options) {
                   }
               };
               )");
-
+              
+  show(true);
   notifyReady();
 }
 
