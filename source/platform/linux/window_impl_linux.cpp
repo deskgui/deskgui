@@ -73,20 +73,23 @@ ViewSize Impl::getSize(PixelsType type) const {
 }
 
 void Impl::setMaxSize(const ViewSize& size, PixelsType type) {
-  ViewSize adjustedSize = size;
-  if (type == PixelsType::kLogical) {
-    adjustedSize.first *= monitorScaleFactor_;
-    adjustedSize.second *= monitorScaleFactor_;
+  ViewSize logicalSize = size;
+  if (type == PixelsType::kPhysical) {
+    logicalSize.first /= monitorScaleFactor_;
+    logicalSize.second /= monitorScaleFactor_;
   }
 
-  maxSize_ = adjustedSize;
-  ViewSize minSize = getMinSize(PixelsType::kPhysical);
+  maxSize_ = logicalSize;
+  maxSizeDefined_ = true;
+
+  auto physicalMax = getMaxSize(PixelsType::kPhysical);
+  auto physicalMin = getMinSize(PixelsType::kPhysical);
 
   GdkGeometry hints;
-  hints.min_height = minSize.second;
-  hints.min_width = minSize.first;
-  hints.max_height = maxSize_.first;
-  hints.max_width = maxSize_.second;
+  hints.min_height = physicalMin.second;
+  hints.min_width = physicalMin.first;
+  hints.max_height = physicalMax.second;
+  hints.max_width = physicalMax.first;
 
   GdkWindowHints h
       = minSizeDefined_ ? GdkWindowHints(GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE) : GDK_HINT_MAX_SIZE;
@@ -94,30 +97,30 @@ void Impl::setMaxSize(const ViewSize& size, PixelsType type) {
 }
 
 ViewSize Impl::getMaxSize(PixelsType type) const {
-  if (type == PixelsType::kLogical) {
-    return ViewSize{maxSize_.first / monitorScaleFactor_, maxSize_.second / monitorScaleFactor_};
-  } else {
-    return maxSize_;
+  if (type == PixelsType::kPhysical) {
+    return ViewSize{maxSize_.first * monitorScaleFactor_, maxSize_.second * monitorScaleFactor_};
   }
+  return maxSize_;
 }
 
 void Impl::setMinSize(const ViewSize& size, PixelsType type) {
-  ViewSize adjustedSize = size;
-  if (type == PixelsType::kLogical) {
-    adjustedSize.first *= monitorScaleFactor_;
-    adjustedSize.second *= monitorScaleFactor_;
+  ViewSize logicalSize = size;
+  if (type == PixelsType::kPhysical) {
+    logicalSize.first /= monitorScaleFactor_;
+    logicalSize.second /= monitorScaleFactor_;
   }
 
-  minSize_ = adjustedSize;
+  minSize_ = logicalSize;
   minSizeDefined_ = true;
 
-  ViewSize maxSize = getMaxSize(PixelsType::kPhysical);
+  auto physicalMin = getMinSize(PixelsType::kPhysical);
+  auto physicalMax = getMaxSize(PixelsType::kPhysical);
 
   GdkGeometry hints;
-  hints.min_width = minSize_.first;
-  hints.min_height = minSize_.second;
-  hints.max_height = maxSize.first;
-  hints.max_width = maxSize.second;
+  hints.min_width = physicalMin.first;
+  hints.min_height = physicalMin.second;
+  hints.max_height = physicalMax.second;
+  hints.max_width = physicalMax.first;
 
   GdkWindowHints h
       = maxSizeDefined_ ? GdkWindowHints(GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE) : GDK_HINT_MIN_SIZE;
@@ -125,11 +128,10 @@ void Impl::setMinSize(const ViewSize& size, PixelsType type) {
 }
 
 ViewSize Impl::getMinSize(PixelsType type) const {
-  if (type == PixelsType::kLogical) {
-    return ViewSize{minSize_.first / monitorScaleFactor_, minSize_.second / monitorScaleFactor_};
-  } else {
-    return minSize_;
+  if (type == PixelsType::kPhysical) {
+    return ViewSize{minSize_.first * monitorScaleFactor_, minSize_.second * monitorScaleFactor_};
   }
+  return minSize_;
 }
 
 void Impl::setPosition(const ViewRect& position, PixelsType type) {

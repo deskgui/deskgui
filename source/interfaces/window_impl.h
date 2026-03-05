@@ -89,7 +89,7 @@ namespace deskgui {
 
     AppHandler* appHandler_{nullptr};
 
-    // Window sizes (physical size)
+    // Window sizes (logical pixels)
     ViewSize minSize_;
     ViewSize maxSize_;
     bool minSizeDefined_{false};

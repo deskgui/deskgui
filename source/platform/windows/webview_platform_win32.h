@@ -32,8 +32,7 @@ namespace deskgui {
 
     bool createWebviewInstance(std::string_view appName, HWND hWnd, const WebviewOptions& options);
 
-    HRESULT onCreateEnvironmentCompleted(ICoreWebView2Environment* environment, HWND hWnd,
-                                         std::atomic_flag& flag);
+    HRESULT onCreateEnvironmentCompleted(ICoreWebView2Environment* environment, HWND hWnd);
     void onCreateCoreWebView2ControllerCompleted(ICoreWebView2Controller* controller);
 
     bool handleDragAndDrop(ICoreWebView2WebMessageReceivedEventArgs* event);
@@ -48,6 +47,7 @@ namespace deskgui {
     bool asyncMode_ = false;
     Webview::Impl* webviewImpl_ = nullptr;
     WebviewOptions options_;
+    std::atomic_flag creationFlag_ = ATOMIC_FLAG_INIT;
   };
 
 }  // namespace deskgui

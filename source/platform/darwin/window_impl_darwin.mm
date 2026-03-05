@@ -100,16 +100,17 @@ ViewSize Impl::getSize(PixelsType type) const {
 }
 
 void Impl::setMaxSize(const ViewSize& size, PixelsType type) {
-  ViewSize adjustedSize = size;
-  if (type == PixelsType::kLogical) {
-    adjustedSize.first *= monitorScaleFactor_;
-    adjustedSize.second *= monitorScaleFactor_;
+  ViewSize logicalSize = size;
+  if (type == PixelsType::kPhysical) {
+    logicalSize.first /= monitorScaleFactor_;
+    logicalSize.second /= monitorScaleFactor_;
   }
 
-  maxSize_ = adjustedSize;
+  maxSize_ = logicalSize;
   maxSizeDefined_ = true;
 
-  [platform_->window setContentMaxSize:NSMakeSize(size.first, size.second)];
+  auto physicalMax = getMaxSize(PixelsType::kPhysical);
+  [platform_->window setContentMaxSize:NSMakeSize(physicalMax.first, physicalMax.second)];
 
   NSButton* button = [platform_->window standardWindowButton:NSWindowZoomButton];
   [button setHidden:YES];
@@ -120,30 +121,31 @@ void Impl::setMaxSize(const ViewSize& size, PixelsType type) {
 }
 
 ViewSize Impl::getMaxSize(PixelsType type) const {
-  if (type == PixelsType::kLogical) {
-    return ViewSize{maxSize_.first / monitorScaleFactor_, maxSize_.second / monitorScaleFactor_};
-  } else {
-    return maxSize_;
+  if (type == PixelsType::kPhysical) {
+    return ViewSize{maxSize_.first * monitorScaleFactor_, maxSize_.second * monitorScaleFactor_};
   }
+  return maxSize_;
 }
 
 void Impl::setMinSize(const ViewSize& size, PixelsType type) {
-  ViewSize adjustedSize = size;
-  if (type == PixelsType::kLogical) {
-    adjustedSize.first *= monitorScaleFactor_;
-    adjustedSize.second *= monitorScaleFactor_;
+  ViewSize logicalSize = size;
+  if (type == PixelsType::kPhysical) {
+    logicalSize.first /= monitorScaleFactor_;
+    logicalSize.second /= monitorScaleFactor_;
   }
 
-  minSize_ = adjustedSize;
-  [platform_->window setContentMinSize:NSMakeSize(size.first, size.second)];
+  minSize_ = logicalSize;
+  minSizeDefined_ = true;
+
+  auto physicalMin = getMinSize(PixelsType::kPhysical);
+  [platform_->window setContentMinSize:NSMakeSize(physicalMin.first, physicalMin.second)];
 }
 
 ViewSize Impl::getMinSize(PixelsType type) const {
-  if (type == PixelsType::kLogical) {
-    return ViewSize{minSize_.first / monitorScaleFactor_, minSize_.second / monitorScaleFactor_};
-  } else {
-    return minSize_;
+  if (type == PixelsType::kPhysical) {
+    return ViewSize{minSize_.first * monitorScaleFactor_, minSize_.second * monitorScaleFactor_};
   }
+  return minSize_;
 }
 
 void Impl::setPosition(const ViewRect& position, PixelsType type) {

@@ -51,12 +51,6 @@ bool Platform::processWindowMessage(Window::Impl *window, HWND hwnd, UINT uMsg, 
     } break;
     case WM_DPICHANGED: {
       window->setMonitorScaleFactor(window->platform()->computeDpiScale(hwnd));
-
-      RECT *suggestedRect = reinterpret_cast<RECT *>(lParam);
-
-      SetWindowPos(hwnd, NULL, suggestedRect->left, suggestedRect->top,
-                   suggestedRect->right - suggestedRect->left,
-                   suggestedRect->bottom - suggestedRect->top, SWP_NOZORDER | SWP_NOACTIVATE);
     } break;
     case WM_ERASEBKGND: {
       auto hdc = reinterpret_cast<HDC>(wParam);
