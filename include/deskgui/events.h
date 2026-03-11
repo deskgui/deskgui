@@ -72,6 +72,17 @@ namespace deskgui::event {
     explicit WindowClose() : Event(true) {}
   };
 
+  /**
+   * @brief Represents a system theme change event.
+   *
+   * Triggered when the system theme changes between light and dark mode,
+   * allowing developers to adapt their UI accordingly.
+   */
+  struct WindowThemeChanged : Event {
+    explicit WindowThemeChanged(SystemTheme themeArg) : Event(false), theme(themeArg) {}
+    const SystemTheme theme;  // The new system theme (light or dark).
+  };
+
   // Webview events
 
   /**

@@ -67,6 +67,9 @@ namespace deskgui {
     inline void close() { appHandler_->destroyWindow(getName()); }
 
     void setBackgroundColor(int red, int green, int blue);
+    void setTitleBarColor(int red, int green, int blue);
+
+    [[nodiscard]] SystemTheme getSystemTheme() const;
 
     [[nodiscard]] void* getNativeWindow();
     [[nodiscard]] void* getContentView();

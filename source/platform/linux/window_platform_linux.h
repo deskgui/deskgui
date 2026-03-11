@@ -23,6 +23,7 @@ namespace deskgui {
     static gboolean onShow(GtkWidget* widget, Window::Impl* window);
     static gboolean onConfigureEvent(GtkWidget* widget, GdkEventConfigure* event,
                                      Window::Impl* window);
+    static void onThemeChanged(GObject* settings, GParamSpec* pspec, Window::Impl* window);
 
     Throttle throttle{kResizeThrottleInMs};
   };

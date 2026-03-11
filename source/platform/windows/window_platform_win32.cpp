@@ -52,6 +52,18 @@ bool Platform::processWindowMessage(Window::Impl *window, HWND hwnd, UINT uMsg, 
     case WM_DPICHANGED: {
       window->setMonitorScaleFactor(window->platform()->computeDpiScale(hwnd));
     } break;
+    case WM_SETTINGCHANGE: {
+      if (lParam && wcscmp(reinterpret_cast<LPCWSTR>(lParam), L"ImmersiveColorSet") == 0) {
+        // Read current theme from registry
+        DWORD useLightTheme = 1;
+        DWORD size = sizeof(useLightTheme);
+        RegGetValueW(HKEY_CURRENT_USER,
+                     L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                     L"AppsUseLightTheme", RRF_RT_DWORD, nullptr, &useLightTheme, &size);
+        auto theme = useLightTheme ? SystemTheme::kLight : SystemTheme::kDark;
+        window->events().emit(event::WindowThemeChanged{theme});
+      }
+    } break;
     case WM_ERASEBKGND: {
       auto hdc = reinterpret_cast<HDC>(wParam);
       RECT rc;
