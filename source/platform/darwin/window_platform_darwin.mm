@@ -18,7 +18,7 @@ using namespace deskgui;
     // Register for appearance change notifications
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(effectiveAppearanceChanged:)
-                                                 name:NSApplicationDidChangeEffectiveAppearanceNotification
+                                                 name:@"NSApplicationDidChangeEffectiveAppearanceNotification"
                                                object:nil];
   }
   return self;
@@ -83,7 +83,7 @@ using namespace deskgui;
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(effectiveAppearanceChanged:)
-                                                 name:NSApplicationDidChangeEffectiveAppearanceNotification
+                                                 name:@"NSApplicationDidChangeEffectiveAppearanceNotification"
                                                object:nil];
   }
   return self;
