@@ -33,6 +33,11 @@ namespace deskgui {
     kPhysical  // Physical pixels.
   };
 
+  enum class SystemTheme {
+    kLight,  // Light theme.
+    kDark    // Dark theme.
+  };
+
   // Represents the default rectangle for a window.
   static const ViewRect kDefaultWindowRect = {0, 0, 600, 600};
 

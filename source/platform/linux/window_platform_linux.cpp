@@ -46,3 +46,14 @@ gboolean Platform::onConfigureEvent(GtkWidget* widget, [[maybe_unused]] GdkEvent
   }
   return FALSE;
 }
+
+// Callback function for theme change
+void Platform::onThemeChanged(GObject* settings, GParamSpec*, Window::Impl* window) {
+  if (!window) return;
+  gchar* themeName = nullptr;
+  g_object_get(settings, "gtk-theme-name", &themeName, nullptr);
+  bool isDark = themeName && g_strstr_len(themeName, -1, "dark") != nullptr;
+  g_free(themeName);
+  auto theme = isDark ? SystemTheme::kDark : SystemTheme::kLight;
+  window->events().emit(event::WindowThemeChanged{theme});
+}

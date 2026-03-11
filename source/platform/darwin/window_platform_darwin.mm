@@ -15,6 +15,11 @@ using namespace deskgui;
   self = [super init];
   if (self) {
     _window = window;
+    // Register for appearance change notifications
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(effectiveAppearanceChanged:)
+                                                 name:NSApplicationDidChangeEffectiveAppearanceNotification
+                                               object:nil];
   }
   return self;
 }
@@ -39,6 +44,15 @@ using namespace deskgui;
 
 - (BOOL)windowShouldZoom:(NSWindow*)window toFrame:(NSRect)newFrame {
   return FALSE;
+}
+
+- (void)effectiveAppearanceChanged:(NSNotification*)notification {
+  NSAppearance* appearance = [NSApp effectiveAppearance];
+  BOOL isDark = [[appearance bestMatchFromAppearancesWithNames:@[
+      NSAppearanceNameAqua, NSAppearanceNameDarkAqua
+  ]] isEqualToString:NSAppearanceNameDarkAqua];
+  auto theme = isDark ? deskgui::SystemTheme::kDark : deskgui::SystemTheme::kLight;
+  _window->events().emit(deskgui::event::WindowThemeChanged{theme});
 }
 
 @end
@@ -66,6 +80,11 @@ using namespace deskgui;
                                              selector:@selector(windowDidResizeNotification:)
                                                  name:NSWindowDidResizeNotification
                                                object:_nativeWindow];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(effectiveAppearanceChanged:)
+                                                 name:NSApplicationDidChangeEffectiveAppearanceNotification
+                                               object:nil];
   }
   return self;
 }
@@ -89,6 +108,15 @@ using namespace deskgui;
 
 - (void)windowDidResizeNotification:(NSNotification*)notification {
   _window->events().emit(event::WindowResize{_window->getSize()});
+}
+
+- (void)effectiveAppearanceChanged:(NSNotification*)notification {
+  NSAppearance* appearance = [NSApp effectiveAppearance];
+  BOOL isDark = [[appearance bestMatchFromAppearancesWithNames:@[
+      NSAppearanceNameAqua, NSAppearanceNameDarkAqua
+  ]] isEqualToString:NSAppearanceNameDarkAqua];
+  auto theme = isDark ? deskgui::SystemTheme::kDark : deskgui::SystemTheme::kLight;
+  _window->events().emit(deskgui::event::WindowThemeChanged{theme});
 }
 
 @end

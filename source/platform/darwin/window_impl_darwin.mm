@@ -245,6 +245,23 @@ void Impl::setBackgroundColor(int red, int green, int blue) {
   [platform_->view.layer setBackgroundColor:color.CGColor];
 }
 
+void Impl::setTitleBarColor(int red, int green, int blue) {
+  NSColor* color = [NSColor colorWithCalibratedRed:red / 255.0
+                                             green:green / 255.0
+                                              blue:blue / 255.0
+                                             alpha:1.0];
+  [platform_->window setTitlebarAppearsTransparent:YES];
+  [platform_->window setBackgroundColor:color];
+}
+
+SystemTheme Impl::getSystemTheme() const {
+  NSAppearance* appearance = [NSApp effectiveAppearance];
+  BOOL isDark = [[appearance bestMatchFromAppearancesWithNames:@[
+      NSAppearanceNameAqua, NSAppearanceNameDarkAqua
+  ]] isEqualToString:NSAppearanceNameDarkAqua];
+  return isDark ? SystemTheme::kDark : SystemTheme::kLight;
+}
+
 void* Impl::getNativeWindow() { return (__bridge void*)platform_->window; }
 
 void* Impl::getContentView() { return (__bridge void*)platform_->view; }

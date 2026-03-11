@@ -20,12 +20,26 @@ int main() {
   window->setMinSize({500, 500});
   window->setSize({800, 800});
   window->center();
-  window->setBackgroundColor(249, 203, 103);
+
+  auto applyTheme = [&window](SystemTheme theme) {
+    if (theme == SystemTheme::kDark) {
+      window->setBackgroundColor(30, 30, 30);
+      window->setTitleBarColor(45, 45, 45);
+    } else {
+      window->setBackgroundColor(249, 203, 103);
+      window->setTitleBarColor(200, 150, 70);
+    }
+  };
+
+  applyTheme(window->getSystemTheme());
+
+  window->connect<WindowThemeChanged>(
+      [&applyTheme](const WindowThemeChanged& event) { applyTheme(event.theme); });
 
   WebviewOptions options;
   options.setOption(WebviewOptions::kActivateNativeDragAndDrop, true);
   auto webview = window->createWebview("webview", options);
-    
+
   webview->loadResources(getCompiledResources("drag_and_drop_example_web_resources"));
   webview->serveResource("index.html");
   webview->enableContextMenu(true);

@@ -37,6 +37,8 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* nativeWindow)
   g_signal_connect(G_OBJECT(platform_->window), "show", G_CALLBACK(platform_->onShow), this);
   g_signal_connect(G_OBJECT(platform_->window), "configure-event",
                    G_CALLBACK(platform_->onConfigureEvent), this);
+  g_signal_connect(gtk_settings_get_default(), "notify::gtk-theme-name",
+                   G_CALLBACK(platform_->onThemeChanged), this);
 }
 
 Impl::~Impl() {
@@ -200,6 +202,25 @@ void Impl::setBackgroundColor(int red, int green, int blue) {
   color.blue = blue * 256;
 
   gtk_widget_modify_bg(GTK_WIDGET(platform_->window), GTK_STATE_NORMAL, &color);
+}
+
+void Impl::setTitleBarColor(int red, int green, int blue) {
+  GtkCssProvider* provider = gtk_css_provider_new();
+  char css[256];
+  snprintf(css, sizeof(css), "headerbar { background-color: rgb(%d, %d, %d); }", red, green, blue);
+  gtk_css_provider_load_from_data(provider, css, -1, nullptr);
+  gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
+                                             GTK_STYLE_PROVIDER(provider),
+                                             GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  g_object_unref(provider);
+}
+
+SystemTheme Impl::getSystemTheme() const {
+  gchar* themeName = nullptr;
+  g_object_get(gtk_settings_get_default(), "gtk-theme-name", &themeName, nullptr);
+  bool isDark = themeName && g_strstr_len(themeName, -1, "dark") != nullptr;
+  g_free(themeName);
+  return isDark ? SystemTheme::kDark : SystemTheme::kLight;
 }
 
 void* Impl::getNativeWindow() { return static_cast<void*>(platform_->window); }

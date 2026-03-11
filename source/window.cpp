@@ -120,6 +120,14 @@ void Window::setBackgroundColor(int red, int green, int blue) {
   utils::dispatch<&Impl::setBackgroundColor>(impl_, red, green, blue);
 }
 
+void Window::setTitleBarColor(int red, int green, int blue) {
+  utils::dispatch<&Impl::setTitleBarColor>(impl_, red, green, blue);
+}
+
+SystemTheme Window::getSystemTheme() const {
+  return utils::dispatch<&Impl::getSystemTheme>(impl_);
+}
+
 // Handle methods
 void* Window::getNativeWindow() const { return utils::dispatch<&Impl::getNativeWindow>(impl_); }
 

@@ -267,6 +267,26 @@ namespace deskgui {
     void setBackgroundColor(int red, int green, int blue);
 
     /**
+     * @brief Sets the title bar color of the window.
+     *
+     * This method sets the title bar color of the window to the specified RGB color.
+     *
+     * @param red The intensity of the red component of the color (0-255).
+     * @param green The intensity of the green component of the color (0-255).
+     * @param blue The intensity of the blue component of the color (0-255).
+     */
+    void setTitleBarColor(int red, int green, int blue);
+
+    /**
+     * @brief Gets the current system theme.
+     *
+     * This method returns the current system theme (light or dark mode).
+     *
+     * @return The current system theme (SystemTheme::kLight or SystemTheme::kDark).
+     */
+    [[nodiscard]] SystemTheme getSystemTheme() const;
+
+    /**
      * @brief Gets the native window handle.
      *
      * @return The native window handle.

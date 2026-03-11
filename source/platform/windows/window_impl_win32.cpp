@@ -5,6 +5,7 @@
  * MIT License
  */
 
+#include <dwmapi.h>
 #include <system_error>
 
 #include "interfaces/app_impl.h"
@@ -243,6 +244,20 @@ void Impl::enable(bool state) {
 void Impl::setBackgroundColor(int red, int green, int blue) {
   platform_->backgroundColor = RGB(red, green, blue);
   InvalidateRect(platform_->windowHandle, nullptr, TRUE);
+}
+
+void Impl::setTitleBarColor(int red, int green, int blue) {
+  COLORREF color = RGB(red, green, blue);
+  DwmSetWindowAttribute(platform_->windowHandle, DWMWA_CAPTION_COLOR, &color, sizeof(color));
+}
+
+SystemTheme Impl::getSystemTheme() const {
+  DWORD useLightTheme = 1;
+  DWORD size = sizeof(useLightTheme);
+  RegGetValueW(HKEY_CURRENT_USER,
+               L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+               L"AppsUseLightTheme", RRF_RT_DWORD, nullptr, &useLightTheme, &size);
+  return useLightTheme ? SystemTheme::kLight : SystemTheme::kDark;
 }
 
 void* Impl::getNativeWindow() { return static_cast<void*>(platform_->windowHandle); }
