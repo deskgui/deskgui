@@ -63,5 +63,5 @@ if (WIN32)
   FetchContent_MakeAvailable(wil)
   
   # Link the WIL library and comctl32 library to the target
-  target_link_libraries(PlatformWebview INTERFACE WIL::WIL comctl32.lib Shlwapi dwmapi.lib)
+  target_link_libraries(PlatformWebview INTERFACE WIL::WIL comctl32.lib Shlwapi)
 endif()

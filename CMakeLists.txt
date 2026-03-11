@@ -78,6 +78,10 @@ target_include_directories(
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE PlatformWebview)
 
+if(WIN32)
+  target_link_libraries(${PROJECT_NAME} PUBLIC dwmapi.lib)
+endif()
+
 if(BUILD_EXAMPLES)
   add_subdirectory(examples examples)
 endif()
