@@ -83,7 +83,8 @@ void Impl::initialize(const WebviewOptions& options) {
                 window.webview = {
                     async postMessage(message) 
                     {
-                      window.webkit.messageHandlers.messageHandler.postMessage(JSON.stringify(message));
+                      if (typeof window.webkit === 'undefined' || !window.webkit.messageHandlers?.messageHandler) return;
+                      return window.webkit.messageHandlers.messageHandler.postMessage(JSON.stringify(message));
                     }
                 };
                 )");

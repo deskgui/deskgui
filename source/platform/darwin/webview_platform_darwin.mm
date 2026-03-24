@@ -13,7 +13,7 @@ using namespace deskgui;
 
 // Global constants
 NSString* const deskgui::kSchemeUri = [NSString stringWithUTF8String:Webview::Impl::kProtocol];
-NSString* const deskgui::kScriptMessageCallback = @"deskgui_callback";
+NSString* const deskgui::kScriptMessageCallback = @"messageHandler";
 
 @implementation CustomNavigationDelegate {
   deskgui::Webview::Impl* webview_;

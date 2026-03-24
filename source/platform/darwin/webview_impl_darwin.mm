@@ -23,8 +23,9 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
 }
 
 Impl::~Impl() {
-  [platform_->webview removeFromSuperview];
+  [platform_->webview stopLoading];
   [platform_->controller removeScriptMessageHandlerForName:kScriptMessageCallback];
+  [platform_->webview removeFromSuperview];
 }
 
 void Impl::initialize(const WebviewOptions& options) {
@@ -88,7 +89,8 @@ void Impl::initialize(const WebviewOptions& options) {
               window.webview = {
                   async postMessage(message)
                   {
-                    webkit.messageHandlers.deskgui_callback.postMessage(message);
+                    if (typeof webkit === 'undefined' || !webkit.messageHandlers?.messageHandler) return;
+                    return webkit.messageHandlers.messageHandler.postMessage(message);
                   }
               };
               )");
