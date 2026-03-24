@@ -149,7 +149,8 @@ void Impl::initialize(const WebviewOptions& options) {
                 window.webview = {
                     async postMessage(message) 
                     {
-                        window.chrome.webview.postMessage(message);
+                        if (typeof window.chrome === 'undefined' || !window.chrome.webview) return;
+                        return window.chrome.webview.postMessage(message);
                     }
                 };
                 )");
