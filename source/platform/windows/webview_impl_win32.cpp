@@ -27,6 +27,8 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
     throw std::invalid_argument("Window is a nullptr");
   }
 
+  applySchemeOptions(options);
+
   platform_->webviewImpl_ = this;
   platform_->options_ = options;
 
@@ -251,7 +253,7 @@ void Impl::loadResources(Resources&& resources) {
   if (!platform_->webResourceRequestedToken) {
     platform_->webResourceRequestedToken = EventRegistrationToken();
 
-    platform_->webview->AddWebResourceRequestedFilter((Impl::kWOrigin + L"*").c_str(),
+    platform_->webview->AddWebResourceRequestedFilter((s2ws(origin_) + L"*").c_str(),
                                                       COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
 
     platform_->webview->add_WebResourceRequested(
@@ -277,7 +279,7 @@ void Impl::loadResources(Resources&& resources) {
               // Check if the requested URL matches the resource you want to load
               auto it = std::find_if(resources_.begin(), resources_.end(),
                                      [&](const Resource& resource) {
-                                       return (Impl::kOrigin + resource.scheme) == requestedUrl;
+                                       return (origin_ + resource.scheme) == requestedUrl;
                                      });
 
               if (it != resources_.end()) {
@@ -310,14 +312,14 @@ void Impl::loadResources(Resources&& resources) {
   }
 }
 
-void Impl::serveResource(const std::string& resourceUrl) { navigate(Impl::kOrigin + resourceUrl); }
+void Impl::serveResource(const std::string& resourceUrl) { navigate(origin_ + resourceUrl); }
 
 void Impl::clearResources() {
   resources_.clear();
 
   if (platform_->webResourceRequestedToken) {
     platform_->webview->remove_WebResourceRequested(platform_->webResourceRequestedToken.value());
-    platform_->webview->RemoveWebResourceRequestedFilter((Impl::kWOrigin + L"*").c_str(),
+    platform_->webview->RemoveWebResourceRequestedFilter((s2ws(origin_) + L"*").c_str(),
                                                          COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
     platform_->webResourceRequestedToken.reset();
   }

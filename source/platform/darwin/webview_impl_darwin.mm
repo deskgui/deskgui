@@ -18,6 +18,8 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
     throw std::invalid_argument("Window is a nullptr");
   }
 
+  applySchemeOptions(options);
+
   platform_->parentWindow = window;
   initialize(options);
 }
@@ -44,12 +46,13 @@ void Impl::initialize(const WebviewOptions& options) {
   }
 
   // Set up navigation delegate and custom scheme handler
+  NSString* schemeUri = [NSString stringWithUTF8String:protocol_.c_str()];
   platform_->navigationDelegate = [[CustomNavigationDelegate alloc] initWithWebview:this
                                                                           resources:&resources_];
   [platform_->controller addScriptMessageHandler:platform_->navigationDelegate
                                             name:kScriptMessageCallback];
   [platform_->configuration setURLSchemeHandler:platform_->navigationDelegate
-                                   forURLScheme:kSchemeUri];
+                                   forURLScheme:schemeUri];
 
   // Register custom scheme as secure (private API)
   auto pool = platform_->configuration.processPool;
@@ -60,8 +63,8 @@ void Impl::initialize(const WebviewOptions& options) {
       NSInvocation* invocation = [NSInvocation invocationWithMethodSignature:signature];
       [invocation setTarget:pool];
       [invocation setSelector:selector];
-      id schemeUri = kSchemeUri;
-      [invocation setArgument:&schemeUri atIndex:2];
+      id schemeUriArg = schemeUri;
+      [invocation setArgument:&schemeUriArg atIndex:2];
       [invocation invoke];
     }
   }
@@ -151,7 +154,7 @@ std::string Impl::getUrl() {
 
 void Impl::loadResources(Resources&& resources) { resources_ = std::move(resources); }
 
-void Impl::serveResource(const std::string& resourceUrl) { navigate(Impl::kOrigin + resourceUrl); }
+void Impl::serveResource(const std::string& resourceUrl) { navigate(origin_ + resourceUrl); }
 
 void Impl::clearResources() { resources_.clear(); }
 

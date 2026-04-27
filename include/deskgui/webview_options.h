@@ -103,6 +103,20 @@ namespace deskgui {
     /// - macOS/Linux: No effect (initialization is always synchronous)
     /// Defaults to false (synchronous/blocking).
     static constexpr auto kAsyncCreation = "async-creation";
+
+    /// Scheme name used to serve embedded resources via loadResources/serveResource.
+    /// Defaults to "webview", giving an origin of "webview://localhost/". Override
+    /// when the default scheme is incompatible with content loaded inside the
+    /// webview (e.g. third-party widgets that read window.location and reject
+    /// non-standard schemes). The value must be a valid URI scheme — letters,
+    /// digits, '+', '-' or '.' — and cannot collide with a scheme already
+    /// registered by the underlying engine (Windows WebView2 rejects standard
+    /// schemes such as "http"/"https").
+    static constexpr auto kCustomSchemeProtocol = "custom-scheme-protocol";
+
+    /// Host used in the resource origin alongside kCustomSchemeProtocol.
+    /// Defaults to "localhost", giving an origin of "<protocol>://localhost/".
+    static constexpr auto kCustomSchemeHost = "custom-scheme-host";
   };
 
 }  // namespace deskgui

@@ -26,12 +26,18 @@ namespace deskgui {
     void initialize(const WebviewOptions& options);
 
     /**
-     * Constants defining the protocol, host, and origin URL of the URL scheme
-     * used in the webview to serve custom resources.
+     * Defaults used when no custom scheme/host is provided via WebviewOptions.
      */
-    static constexpr auto kProtocol = "webview";
-    inline static const std::string kOrigin = "webview://localhost/";
-    inline static const std::wstring kWOrigin = L"webview://localhost/";
+    static constexpr auto kDefaultProtocol = "webview";
+    static constexpr auto kDefaultHost = "localhost";
+
+    /**
+     * Per-instance scheme metadata, derived from WebviewOptions during
+     * construction. See WebviewOptions::kCustomSchemeProtocol /
+     * WebviewOptions::kCustomSchemeHost.
+     */
+    [[nodiscard]] inline const std::string& getProtocol() const { return protocol_; }
+    [[nodiscard]] inline const std::string& getOrigin() const { return origin_; }
 
     [[nodiscard]] inline std::string getName() const { return name_; }
 
@@ -71,6 +77,8 @@ namespace deskgui {
     [[nodiscard]] inline EventBus& events() { return events_; }
 
   private:
+    void applySchemeOptions(const WebviewOptions& options);
+
     std::unique_ptr<Platform> platform_{nullptr};
     std::string name_;
     std::unordered_map<std::string, MessageCallback> callbacks_;
@@ -80,6 +88,8 @@ namespace deskgui {
     mutable std::mutex readyMutex_;
     bool isReady_ = false;
     std::vector<std::function<void()>> readyCallbacks_;
+    std::string protocol_;
+    std::string origin_;
   };
 
 }  // namespace deskgui

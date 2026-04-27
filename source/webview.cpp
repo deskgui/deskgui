@@ -119,6 +119,18 @@ void Webview::Impl::onMessage(const std::string& message) {
   events().emit(deskgui::event::WebviewOnMessage{message});
 }
 
+void Webview::Impl::applySchemeOptions(const WebviewOptions& options) {
+  protocol_ = options.hasOption(WebviewOptions::kCustomSchemeProtocol)
+                  ? options.getOption<std::string>(WebviewOptions::kCustomSchemeProtocol)
+                  : std::string{kDefaultProtocol};
+  std::string host = options.hasOption(WebviewOptions::kCustomSchemeHost)
+                         ? options.getOption<std::string>(WebviewOptions::kCustomSchemeHost)
+                         : std::string{kDefaultHost};
+  if (protocol_.empty()) protocol_ = kDefaultProtocol;
+  if (host.empty()) host = kDefaultHost;
+  origin_ = protocol_ + "://" + host + "/";
+}
+
 // Settings methods
 void Webview::enableDevTools(bool state) {
   if (!isReady()) return;
