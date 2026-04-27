@@ -60,9 +60,12 @@ bool Platform::createWebviewInstance(std::string_view appName, HWND hWnd,
 
   environmentOptions->put_AdditionalBrowserArguments(additionalArguments.c_str());
 
-  // Register custom scheme
+  // Register custom scheme. WebView2 expects the scheme NAME here (e.g. "webview"),
+  // not a full origin URL — the registration applies to every host under that scheme.
+  const std::wstring schemeName = s2ws(webviewImpl_ ? webviewImpl_->getProtocol()
+                                                    : std::string{Webview::Impl::kDefaultProtocol});
   auto customSchemeRegistration
-      = Microsoft::WRL::Make<CoreWebView2CustomSchemeRegistration>(Webview::Impl::kWOrigin.c_str());
+      = Microsoft::WRL::Make<CoreWebView2CustomSchemeRegistration>(schemeName.c_str());
   customSchemeRegistration->put_TreatAsSecure(true);
   customSchemeRegistration->put_HasAuthorityComponent(true);
   std::array<ICoreWebView2CustomSchemeRegistration*, 1> registrations

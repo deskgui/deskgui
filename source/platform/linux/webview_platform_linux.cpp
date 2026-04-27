@@ -69,7 +69,7 @@ namespace deskgui {
 
     auto it = std::find_if(impl->resources_.begin(), impl->resources_.end(),
                            [&](const Resource& resource) {
-                             return (Webview::Impl::kOrigin + resource.scheme) == std::string(uri);
+                             return (impl->getOrigin() + resource.scheme) == std::string(uri);
                            });
 
     if (it != impl->resources_.end()) {

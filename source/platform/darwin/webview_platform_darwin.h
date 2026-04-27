@@ -58,7 +58,6 @@
 
 namespace deskgui {
 
-  extern NSString* const kSchemeUri;
   extern NSString* const kScriptMessageCallback;
 
   /**

@@ -18,6 +18,8 @@ Impl::Impl(const std::string& name, AppHandler* appHandler, void* window,
     throw std::invalid_argument("Window is a nullptr");
   }
 
+  applySchemeOptions(options);
+
   // Create GTK container hierarchy
   GtkWindow* parentWindow = GTK_WINDOW(window);
   GtkScrolledWindow* scrolledWindow = GTK_SCROLLED_WINDOW(gtk_scrolled_window_new(NULL, NULL));
@@ -75,7 +77,7 @@ void Impl::initialize(const WebviewOptions& options) {
   // Register custom URI scheme for local resources
   WebKitWebContext* context = webkit_web_view_get_context(platform_->webview);
   webkit_web_context_register_uri_scheme(
-      context, Impl::kProtocol, (WebKitURISchemeRequestCallback)platform_->onCustomSchemeRequest,
+      context, protocol_.c_str(), (WebKitURISchemeRequestCallback)platform_->onCustomSchemeRequest,
       this, NULL);
 
   // Inject JS bridge
@@ -142,7 +144,7 @@ void Impl::loadHTMLString(const std::string& html) {
 
 void Impl::loadResources(Resources&& resources) { resources_ = std::move(resources); }
 
-void Impl::serveResource(const std::string& resourceUrl) { navigate(Impl::kOrigin + resourceUrl); }
+void Impl::serveResource(const std::string& resourceUrl) { navigate(origin_ + resourceUrl); }
 
 void Impl::clearResources() { resources_.clear(); }
 

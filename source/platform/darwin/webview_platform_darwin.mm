@@ -12,7 +12,6 @@
 using namespace deskgui;
 
 // Global constants
-NSString* const deskgui::kSchemeUri = [NSString stringWithUTF8String:Webview::Impl::kProtocol];
 NSString* const deskgui::kScriptMessageCallback = @"messageHandler";
 
 @implementation CustomNavigationDelegate {
@@ -81,10 +80,11 @@ NSString* const deskgui::kScriptMessageCallback = @"messageHandler";
 }
 
 - (void)webView:(WKWebView*)webView startURLSchemeTask:(id<WKURLSchemeTask>)urlSchemeTask {
-  if ([urlSchemeTask.request.URL.scheme isEqualToString:kSchemeUri] && resources_ != nullptr) {
+  NSString* schemeUri = [NSString stringWithUTF8String:webview_->getProtocol().c_str()];
+  if ([urlSchemeTask.request.URL.scheme isEqualToString:schemeUri] && resources_ != nullptr) {
     NSString* resourceURL = urlSchemeTask.request.URL.relativeString;
     std::string resourceURLString = [resourceURL UTF8String];
-    std::string resourceScheme = resourceURLString.substr(Webview::Impl::kOrigin.size());
+    std::string resourceScheme = resourceURLString.substr(webview_->getOrigin().size());
 
     size_t secondLastDotPos = resourceScheme.rfind('.', resourceScheme.rfind('.') - 1);
     if (secondLastDotPos != std::string::npos) {
