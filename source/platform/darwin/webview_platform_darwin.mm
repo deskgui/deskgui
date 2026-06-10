@@ -161,14 +161,20 @@ NSString* const deskgui::kScriptMessageCallback = @"messageHandler";
 
 @end
 
-@implementation CustomWebview
+@implementation CustomWebview {
+  deskgui::Webview::Impl* webview_;
+}
 
 - (instancetype)initWithFrame:(NSRect)frame
                 configuration:(WKWebViewConfiguration*)configuration
-            enableDragAndDrop:(BOOL)enableDragAndDrop {
+            enableDragAndDrop:(BOOL)enableDragAndDrop
+                      webview:(deskgui::Webview::Impl*)webviewImpl {
   self = [super initWithFrame:frame configuration:configuration];
-  if (self && enableDragAndDrop) {
-    [self registerForDraggedTypes:@[ NSPasteboardTypeFileURL ]];
+  if (self) {
+    webview_ = webviewImpl;
+    if (enableDragAndDrop) {
+      [self registerForDraggedTypes:@[ NSPasteboardTypeFileURL ]];
+    }
   }
   return self;
 }
@@ -249,9 +255,16 @@ NSString* const deskgui::kScriptMessageCallback = @"messageHandler";
   // Get drop location in view coordinates
   NSPoint dropPoint = [self convertPoint:[sender draggingLocation] fromView:nil];
 
-  // Use the utility function to generate the JavaScript code
-  std::string jsEvent = js::createDropEvent(paths, dropPoint.x, dropPoint.y);
-  [self evaluateJavaScript:[NSString stringWithUTF8String:jsEvent.c_str()] completionHandler:nil];
+  // Notify native listeners with the real paths before dispatching to JavaScript.
+  event::WebviewFilesDropped dropEvent(paths, dropPoint.x, dropPoint.y);
+  if (webview_) {
+    webview_->events().emit(dropEvent);
+  }
+
+  if (!dropEvent.isCancelled()) {
+    std::string jsEvent = js::createDropEvent(paths, dropPoint.x, dropPoint.y);
+    [self evaluateJavaScript:[NSString stringWithUTF8String:jsEvent.c_str()] completionHandler:nil];
+  }
 
   return YES;
 }

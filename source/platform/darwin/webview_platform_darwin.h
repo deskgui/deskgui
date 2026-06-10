@@ -49,7 +49,8 @@
 @interface CustomWebview : WKWebView <NSDraggingDestination>
 - (instancetype)initWithFrame:(NSRect)frame
                 configuration:(WKWebViewConfiguration*)configuration
-            enableDragAndDrop:(BOOL)enableDragAndDrop;
+            enableDragAndDrop:(BOOL)enableDragAndDrop
+                      webview:(deskgui::Webview::Impl*)webviewImpl;
 - (BOOL)acceptsFirstResponder;
 - (BOOL)becomeFirstResponder;
 - (BOOL)resignFirstResponder;

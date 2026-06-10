@@ -74,7 +74,8 @@ void Impl::initialize(const WebviewOptions& options) {
       = options.getOption<bool>(WebviewOptions::kActivateNativeDragAndDrop);
   platform_->webview = [[CustomWebview alloc] initWithFrame:CGRectZero
                                               configuration:platform_->configuration
-                                          enableDragAndDrop:nativeDragAndDrop];
+                                          enableDragAndDrop:nativeDragAndDrop
+                                                    webview:this];
 
   // Add to parent window
   [platform_->webview setFrame:[(__bridge id)platform_->parentWindow frame]];

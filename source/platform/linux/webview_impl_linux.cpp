@@ -67,6 +67,15 @@ void Impl::initialize(const WebviewOptions& options) {
   g_signal_connect(platform_->webview, "decide-policy", G_CALLBACK(platform_->onNavigationRequest),
                    this);
 
+  // Native file drag-and-drop
+  if (options.getOption<bool>(WebviewOptions::kActivateNativeDragAndDrop)) {
+    gtk_drag_dest_set(GTK_WIDGET(platform_->webview), GTK_DEST_DEFAULT_ALL, nullptr, 0,
+                      GDK_ACTION_COPY);
+    gtk_drag_dest_add_uri_targets(GTK_WIDGET(platform_->webview));
+    g_signal_connect(platform_->webview, "drag-data-received",
+                     G_CALLBACK(platform_->onDragDataReceived), this);
+  }
+
   // Set up message handler for JS communication
   WebKitUserContentManager* contentManager
       = webkit_web_view_get_user_content_manager(platform_->webview);

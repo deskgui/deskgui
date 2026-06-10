@@ -26,5 +26,8 @@ namespace deskgui {
     static void onScriptMessageReceived(WebKitUserContentManager* manager,
                                         WebKitJavascriptResult* message, Webview::Impl* impl);
     static void onCustomSchemeRequest(WebKitURISchemeRequest* request, gpointer userData);
+    static void onDragDataReceived(GtkWidget* widget, GdkDragContext* context, gint x, gint y,
+                                   GtkSelectionData* data, guint info, guint time,
+                                   Webview::Impl* impl);
   };
 }  // namespace deskgui
