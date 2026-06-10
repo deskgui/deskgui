@@ -232,7 +232,14 @@ bool Platform::handleDragAndDrop(ICoreWebView2WebMessageReceivedEventArgs* event
       }
     }
 
-    webview->ExecuteScript(s2ws(js::createDropEvent(paths, x, y)).c_str(), nullptr);
+    event::WebviewFilesDropped dropEvent(paths, x, y);
+    if (webviewImpl_) {
+      webviewImpl_->events().emit(dropEvent);
+    }
+
+    if (!dropEvent.isCancelled()) {
+      webview->ExecuteScript(s2ws(js::createDropEvent(paths, x, y)).c_str(), nullptr);
+    }
     return true;
   }
 

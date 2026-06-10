@@ -8,6 +8,8 @@
 #include <deskgui/app.h>
 #include <deskgui/resource_compiler.h>
 
+#include <iostream>
+
 using namespace deskgui;
 using namespace deskgui::event;
 
@@ -44,6 +46,17 @@ int main() {
   webview->serveResource("index.html");
   webview->enableContextMenu(true);
   webview->enableDevTools(true);
+
+  // Native listener: receives the real dropped paths before the JavaScript 'deskgui:drop'
+  // event is dispatched. Call event.preventDefault() to handle the drop natively and
+  // suppress the JavaScript event.
+  webview->connect<WebviewFilesDropped>([](const WebviewFilesDropped& event) {
+    std::cout << "Native drop at (" << event.x << ", " << event.y << ") with " << event.paths.size()
+              << " file(s):" << std::endl;
+    for (const auto& path : event.paths) {
+      std::cout << "  " << path.string() << std::endl;
+    }
+  });
 
   window->connect<WindowResize>(
       [&webview](const WindowResize& event) { webview->resize(event.size); });

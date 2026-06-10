@@ -7,6 +7,10 @@
 
 #include "webview_platform_linux.h"
 
+#include <filesystem>
+
+#include "js/drop.h"
+
 namespace deskgui {
 
   using Platform = Webview::Impl::Platform;
@@ -97,6 +101,39 @@ namespace deskgui {
                 "Cannot load requested resource for webview");
     webkit_uri_scheme_request_finish_error(request, error);
     g_clear_error(&error);
+  }
+
+  void Platform::onDragDataReceived(GtkWidget*, GdkDragContext* context, gint x, gint y,
+                                    GtkSelectionData* data, guint, guint time, Webview::Impl* impl) {
+    if (!impl) {
+      gtk_drag_finish(context, FALSE, FALSE, time);
+      return;
+    }
+
+    std::vector<std::filesystem::path> paths;
+    if (gchar** uris = gtk_selection_data_get_uris(data); uris) {
+      for (gchar** uri = uris; *uri; ++uri) {
+        if (gchar* filename = g_filename_from_uri(*uri, nullptr, nullptr); filename) {
+          paths.emplace_back(filename);
+          g_free(filename);
+        }
+      }
+      g_strfreev(uris);
+    }
+
+    if (paths.empty()) {
+      gtk_drag_finish(context, FALSE, FALSE, time);
+      return;
+    }
+
+    event::WebviewFilesDropped dropEvent(paths, static_cast<double>(x), static_cast<double>(y));
+    impl->events().emit(dropEvent);
+
+    if (!dropEvent.isCancelled()) {
+      impl->executeScript(js::createDropEvent(paths, x, y));
+    }
+
+    gtk_drag_finish(context, TRUE, FALSE, time);
   }
 
 }  // namespace deskgui

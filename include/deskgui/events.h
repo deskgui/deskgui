@@ -9,8 +9,10 @@
 
 #include <deskgui/types.h>
 
+#include <filesystem>
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace deskgui::event {
 
@@ -153,6 +155,21 @@ namespace deskgui::event {
   struct WebviewWindowRequested : Event {
     explicit WebviewWindowRequested(const std::string& urlArg) : Event(true), url(urlArg) {}
     const std::string url;  // The URL of the window requested to be opened.
+  };
+
+  /**
+   * @brief Represents files dropped onto the webview via native drag-and-drop.
+   *
+   * Fired with the real filesystem paths before deskgui dispatches the JavaScript
+   * 'deskgui:drop' event to the web content. Cancellable: calling preventDefault()
+   * suppresses the JavaScript event, allowing native code to fully handle the drop.
+   */
+  struct WebviewFilesDropped : Event {
+    WebviewFilesDropped(std::vector<std::filesystem::path> droppedPaths, double xArg, double yArg)
+        : Event(true), paths(std::move(droppedPaths)), x(xArg), y(yArg) {}
+    const std::vector<std::filesystem::path> paths;  // Absolute paths of the dropped files.
+    const double x;                                  // Drop position x, in client coordinates.
+    const double y;                                  // Drop position y, in client coordinates.
   };
 
 }  // namespace deskgui::event
