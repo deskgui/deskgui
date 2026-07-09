@@ -5,6 +5,8 @@
  * MIT License
  */
 
+#include <deskgui/app_icon.h>
+
 #include "interfaces/window_impl.h"
 #include "utils/dispatch.h"
 
@@ -46,7 +48,14 @@ Webview* Window::getWebview(const std::string& name) const {
 }
 
 Window::Window(const std::string& name, AppHandler* appHandler, void* nativeWindow)
-    : impl_(std::make_shared<Impl>(name, appHandler, nativeWindow)), events_(&impl_->events()) {}
+    : impl_(std::make_shared<Impl>(name, appHandler, nativeWindow)), events_(&impl_->events()) {
+  // Apply the app icon registered at build time by deskgui_target_icon(), if any.
+  const unsigned char* iconData = internal::appIconData();
+  const std::size_t iconSize = internal::appIconSize();
+  if (iconData != nullptr && iconSize > 0) {
+    impl_->setIcon(std::vector<std::uint8_t>(iconData, iconData + iconSize));
+  }
+}
 
 Window::~Window() = default;
 
@@ -110,6 +119,8 @@ void Window::hide() { utils::dispatch<&Impl::hide>(impl_); }
 void Window::show() { utils::dispatch<&Impl::show>(impl_); }
 
 void Window::center() { utils::dispatch<&Impl::center>(impl_); }
+
+void Window::focus() { utils::dispatch<&Impl::focus>(impl_); }
 
 void Window::enable(bool state) { utils::dispatch<&Impl::enable>(impl_, state); }
 

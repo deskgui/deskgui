@@ -41,6 +41,7 @@ set(sources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/app.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/window.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/webview.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/app_icon.cpp"
     )
     
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME)
@@ -68,6 +69,9 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(webview2_VERSION "1.0.2592.51" CACHE STRING "The WebView2 version to use" FORCE)
 include(platform_webview)
 include(rapidjson)
+
+# Provide the deskgui_target_icon() helper for consumers
+include(app_icon)
 
 target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>

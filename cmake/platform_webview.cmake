@@ -62,6 +62,7 @@ if (WIN32)
   FetchContent_Declare(wil GIT_REPOSITORY "https://github.com/microsoft/wil")
   FetchContent_MakeAvailable(wil)
   
-  # Link the WIL library and comctl32 library to the target
-  target_link_libraries(PlatformWebview INTERFACE WIL::WIL comctl32.lib Shlwapi dwmapi.lib)
+  # Link the WIL library and comctl32 library to the target.
+  # gdiplus is used to decode icon images (PNG/ICO/...) into native HICONs.
+  target_link_libraries(PlatformWebview INTERFACE WIL::WIL comctl32.lib Shlwapi dwmapi.lib gdiplus.lib)
 endif()

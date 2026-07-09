@@ -9,6 +9,7 @@
 #include <system_error>
 #include <utility>
 
+#include "app_icon_win32.h"
 #include "interfaces/app_impl.h"
 #include "window_platform_win32.h"
 
@@ -117,6 +118,12 @@ void Platform::registerWindowClass() {
     wc.lpfnWndProc = windowProc;
     wc.hInstance = hInstance;
     wc.lpszClassName = CLASS_NAME;
+
+    // Use the application icon embedded into the executable by the
+    // deskgui_target_icon() CMake helper, if present. When it is absent
+    // LoadIcon returns null and the system falls back to the default icon.
+    HICON appIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_DESKGUI_APP_ICON));
+    wc.hIcon = appIcon;
 
     if (!RegisterClass(&wc)) {
       throw std::system_error(static_cast<int>(GetLastError()), std::system_category());

@@ -230,6 +230,14 @@ void Impl::show() {
 
 void Impl::center() { [platform_->window center]; }
 
+void Impl::focus() {
+  if ([platform_->window isMiniaturized]) {
+    [platform_->window deminiaturize:nil];
+  }
+  [platform_->window makeKeyAndOrderFront:nil];
+  [NSApp activateIgnoringOtherApps:YES];
+}
+
 void Impl::enable(bool state) {
   [platform_->window setIgnoresMouseEvents:state ? NO : YES];
 
@@ -252,6 +260,18 @@ void Impl::setTitleBarColor(int red, int green, int blue) {
                                              alpha:1.0];
   [platform_->window setTitlebarAppearsTransparent:YES];
   [platform_->window setBackgroundColor:color];
+}
+
+void Impl::setIcon(const std::vector<std::uint8_t>& icon) {
+  if (icon.empty()) {
+    return;
+  }
+  NSData* data = [NSData dataWithBytes:icon.data() length:icon.size()];
+  NSImage* image = [[NSImage alloc] initWithData:data];
+  if (image != nil) {
+    // macOS windows have no title bar icon; the app icon lives in the Dock.
+    [NSApp setApplicationIconImage:image];
+  }
 }
 
 SystemTheme Impl::getSystemTheme() const {

@@ -38,5 +38,6 @@ namespace deskgui {
 
     Throttle throttle{kResizeThrottleInMs};
     COLORREF backgroundColor;
+    HICON icon = nullptr;
   };
 }  // namespace deskgui
