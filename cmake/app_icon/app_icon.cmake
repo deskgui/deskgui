@@ -34,7 +34,8 @@
 #     launcher/menu icons always come from the icon theme: ship a .desktop file
 #     with Icon= and an app id matching the binary for full desktop integration.
 
-set(_DESKGUI_APP_ICON_DIR "${CMAKE_CURRENT_LIST_DIR}/app_icon")
+# The .rc.in / .cpp.in templates live next to this file.
+set(_DESKGUI_APP_ICON_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 # Must match IDI_DESKGUI_APP_ICON in source/platform/windows/app_icon_win32.h
 set(_DESKGUI_APP_ICON_ID 101)
