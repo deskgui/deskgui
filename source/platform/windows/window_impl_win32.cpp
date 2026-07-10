@@ -6,7 +6,12 @@
  */
 
 #include <dwmapi.h>
+#include <gdiplus.h>
+#include <shlwapi.h>
+
+#include <cstdint>
 #include <system_error>
+#include <vector>
 
 #include "interfaces/app_impl.h"
 #include "utils/strings.h"
@@ -17,6 +22,39 @@ using namespace deskgui;
 using namespace deskgui::utils;
 
 using Impl = Window::Impl;
+
+namespace {
+  // Decodes encoded image bytes (PNG, ICO, JPG, ...) into an HICON using GDI+.
+  // Returns nullptr on failure. The caller owns the returned icon and must
+  // release it with DestroyIcon.
+  HICON createIconFromBytes(const std::vector<std::uint8_t>& data) {
+    if (data.empty()) {
+      return nullptr;
+    }
+
+    // Initialize GDI+ once for the lifetime of the process.
+    static const ULONG_PTR gdiplusToken = []() {
+      ULONG_PTR token = 0;
+      Gdiplus::GdiplusStartupInput input;
+      Gdiplus::GdiplusStartup(&token, &input, nullptr);
+      return token;
+    }();
+    (void)gdiplusToken;
+
+    HICON icon = nullptr;
+    if (IStream* stream = SHCreateMemStream(data.data(), static_cast<UINT>(data.size()))) {
+      auto* bitmap = Gdiplus::Bitmap::FromStream(stream);
+      if (bitmap) {
+        if (bitmap->GetLastStatus() == Gdiplus::Ok) {
+          bitmap->GetHICON(&icon);
+        }
+        delete bitmap;
+      }
+      stream->Release();
+    }
+    return icon;
+  }
+}  // namespace
 
 Impl::Impl(const std::string& name, AppHandler* appHandler, void* nativeWindow)
     : platform_(std::make_unique<Impl::Platform>()), name_(name), appHandler_(appHandler) {
@@ -59,9 +97,20 @@ Impl::~Impl() {
     if (!isExternalWindow_) {
       DestroyWindow(platform_->windowHandle);
     } else {
+      // The external window outlives us: stop it from referencing the icon we
+      // are about to destroy.
+      if (platform_->icon) {
+        SendMessage(platform_->windowHandle, WM_SETICON, ICON_SMALL, 0);
+        SendMessage(platform_->windowHandle, WM_SETICON, ICON_BIG, 0);
+      }
       RemoveWindowSubclass(platform_->windowHandle, &Platform::subclassProc, 1);
     }
     platform_->windowHandle = nullptr;
+  }
+
+  if (platform_->icon) {
+    DestroyIcon(platform_->icon);
+    platform_->icon = nullptr;
   }
 }
 
@@ -233,6 +282,34 @@ void Impl::center() {
                SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 }
 
+void Impl::focus() {
+  HWND hwnd = platform_->windowHandle;
+
+  if (IsIconic(hwnd)) {
+    ShowWindow(hwnd, SW_RESTORE);
+  } else {
+    ShowWindow(hwnd, SW_SHOW);
+  }
+
+  // Windows blocks SetForegroundWindow when the calling thread does not own the
+  // current foreground window. Temporarily attach to the foreground thread's
+  // input queue so the activation is allowed.
+  HWND foregroundWindow = GetForegroundWindow();
+  DWORD foregroundThread = GetWindowThreadProcessId(foregroundWindow, nullptr);
+  DWORD currentThread = GetCurrentThreadId();
+
+  bool attached = foregroundThread != currentThread
+                  && AttachThreadInput(currentThread, foregroundThread, TRUE);
+
+  BringWindowToTop(hwnd);
+  SetForegroundWindow(hwnd);
+  SetFocus(hwnd);
+
+  if (attached) {
+    AttachThreadInput(currentThread, foregroundThread, FALSE);
+  }
+}
+
 void Impl::enable(bool state) {
   EnableWindow(platform_->windowHandle, state ? TRUE : FALSE);
 
@@ -249,6 +326,22 @@ void Impl::setBackgroundColor(int red, int green, int blue) {
 void Impl::setTitleBarColor(int red, int green, int blue) {
   COLORREF color = RGB(red, green, blue);
   DwmSetWindowAttribute(platform_->windowHandle, DWMWA_CAPTION_COLOR, &color, sizeof(color));
+}
+
+void Impl::setIcon(const std::vector<std::uint8_t>& icon) {
+  HICON newIcon = createIconFromBytes(icon);
+  if (!newIcon) {
+    return;
+  }
+
+  SendMessage(platform_->windowHandle, WM_SETICON, ICON_SMALL,
+              reinterpret_cast<LPARAM>(newIcon));
+  SendMessage(platform_->windowHandle, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(newIcon));
+
+  if (platform_->icon) {
+    DestroyIcon(platform_->icon);
+  }
+  platform_->icon = newIcon;
 }
 
 SystemTheme Impl::getSystemTheme() const {

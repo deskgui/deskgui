@@ -187,6 +187,12 @@ void Impl::center() {
   gtk_window_move(platform_->window, x, y);
 }
 
+void Impl::focus() {
+  gtk_widget_show(GTK_WIDGET(platform_->window));
+  gtk_window_deiconify(platform_->window);
+  gtk_window_present(platform_->window);
+}
+
 void Impl::enable(bool state) {
   gtk_widget_set_sensitive(GTK_WIDGET(platform_->window), state ? TRUE : FALSE);
 
@@ -213,6 +219,24 @@ void Impl::setTitleBarColor(int red, int green, int blue) {
                                              GTK_STYLE_PROVIDER(provider),
                                              GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   g_object_unref(provider);
+}
+
+void Impl::setIcon(const std::vector<std::uint8_t>& icon) {
+  if (icon.empty()) {
+    return;
+  }
+
+  GdkPixbufLoader* loader = gdk_pixbuf_loader_new();
+  gboolean loaded = gdk_pixbuf_loader_write(loader, icon.data(), icon.size(), nullptr);
+  // The loader must always be closed before it is finalized, even after a
+  // failed write.
+  loaded = gdk_pixbuf_loader_close(loader, nullptr) && loaded;
+  if (loaded) {
+    if (GdkPixbuf* pixbuf = gdk_pixbuf_loader_get_pixbuf(loader)) {
+      gtk_window_set_icon(platform_->window, pixbuf);
+    }
+  }
+  g_object_unref(loader);
 }
 
 SystemTheme Impl::getSystemTheme() const {

@@ -243,6 +243,15 @@ namespace deskgui {
     void center();
 
     /**
+     * @brief Brings the window to the foreground and gives it focus.
+     *
+     * Activates the window, restoring it if minimized, raising it above other
+     * windows and making it the key/focused window. Use this to move the
+     * application to the foreground programmatically.
+     */
+    void focus();
+
+    /**
      * Enables or disables the window.
      *
      * @param state The state to set the window to. `true` to enable the window, `false` to disable

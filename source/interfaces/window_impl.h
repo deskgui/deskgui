@@ -10,11 +10,13 @@
 #include <deskgui/window.h>
 
 #include <atomic>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
+#include <vector>
 
 namespace deskgui {
   /**
@@ -63,11 +65,15 @@ namespace deskgui {
     void hide();
     void show();
     void center();
+    void focus();
     void enable(bool state);
     inline void close() { appHandler_->destroyWindow(getName()); }
 
     void setBackgroundColor(int red, int green, int blue);
     void setTitleBarColor(int red, int green, int blue);
+
+    // Sets the window/task-bar/dock icon from encoded image bytes
+    void setIcon(const std::vector<std::uint8_t>& icon);
 
     [[nodiscard]] SystemTheme getSystemTheme() const;
 
