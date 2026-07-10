@@ -34,10 +34,13 @@
 #     launcher/menu icons always come from the icon theme: ship a .desktop file
 #     with Icon= and an app id matching the binary for full desktop integration.
 
-set(_DESKGUI_APP_ICON_DIR "${CMAKE_CURRENT_LIST_DIR}/app_icon")
+# The .rc.in / .cpp.in templates live next to this file. Cached so the value is
+# visible from any scope: deskgui_target_icon() may be called from a consumer's
+# directory (add_subdirectory / FetchContent), not just from below this one.
+set(_DESKGUI_APP_ICON_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE INTERNAL "deskgui app icon template dir")
 
 # Must match IDI_DESKGUI_APP_ICON in source/platform/windows/app_icon_win32.h
-set(_DESKGUI_APP_ICON_ID 101)
+set(_DESKGUI_APP_ICON_ID 101 CACHE INTERNAL "deskgui app icon resource id")
 
 # Enable the RC language once, at module inclusion time (stable directory scope).
 # Doing this inside deskgui_target_icon() breaks CMake's build-time regeneration

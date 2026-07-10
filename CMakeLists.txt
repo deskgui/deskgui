@@ -71,7 +71,7 @@ include(platform_webview)
 include(rapidjson)
 
 # Provide the deskgui_target_icon() helper for consumers
-include(app_icon)
+include(app_icon/app_icon)
 
 target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
