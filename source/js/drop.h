@@ -62,6 +62,9 @@ namespace deskgui::js {
 
   static const auto kWindowsDropListener = R"(
       document.addEventListener('drop', function(e) {
+        if (!e.dataTransfer || e.dataTransfer.files.length === 0) {
+          return;
+        }
         window.chrome.webview.postMessageWithAdditionalObjects(
           JSON.stringify({
             type: 'deskgui-files-dropped',
