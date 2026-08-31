@@ -211,9 +211,11 @@ bool Platform::handleDragAndDrop(ICoreWebView2WebMessageReceivedEventArgs* event
     double y = doc["y"].GetDouble();
 
     wil::com_ptr<ICoreWebView2ObjectCollectionView> objectsCollection;
-    args2->get_AdditionalObjects(&objectsCollection);
-    unsigned int length;
+    if (FAILED(args2->get_AdditionalObjects(&objectsCollection)) || !objectsCollection) {
+      return true;
+    }
 
+    unsigned int length = 0;
     objectsCollection->get_Count(&length);
     std::vector<std::filesystem::path> paths;
 
